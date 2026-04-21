@@ -201,6 +201,25 @@
     .winner-modal-name { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
     .winner-modal-sub { color: #666; margin-bottom: 1.25rem; font-size: 0.95rem; }
 
+    @keyframes tiepulse {
+      from { transform: scale(1); box-shadow: 0 0 10px rgba(255,50,0,0.6); }
+      to   { transform: scale(1.015); box-shadow: 0 0 24px rgba(255,50,0,1); }
+    }
+
+    .tiebreaker-banner {
+      background: linear-gradient(135deg, #b00, #ff4500, #b00);
+      color: white;
+      font-weight: 900;
+      text-align: center;
+      font-size: 1rem;
+      padding: 1rem 1.25rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      animation: tiepulse 0.7s infinite alternate;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
     .bar-wrap { min-width: 160px; }
 
     .vote-bar {
@@ -499,7 +518,10 @@
     votes.forEach(v => { counts[v.restaurant_id] = (counts[v.restaurant_id] || 0) + 1; });
     const maxCount = Math.max(...Object.values(counts), 1);
 
-    let html = `<div class="section-header"><h2>This Week's Ballot</h2><div class="btn-row">`;
+    const isTiebreaker = !!ballot.title;
+    const ballotTitle = ballot.title || "This Week's Ballot";
+
+    let html = `<div class="section-header"><h2>${escHtml(ballotTitle)}</h2><div class="btn-row">`;
     if (!ballot.closed && canCloseBallot()) {
       html += `<button class="btn secondary sm" onclick="closeBallot('${ballot.id}')">Close</button>`;
     }
@@ -507,6 +529,10 @@
       html += `<button class="btn sm" onclick="generateBallot()">New Ballot</button>`;
     }
     html += `</div></div>`;
+
+    if (isTiebreaker && !ballot.closed) {
+      html += `<div class="tiebreaker-banner">⚡ ${escHtml(ballotTitle)} ⚡</div>`;
+    }
 
     if (ballot.closed) {
       html += `<div class="banner warn">This ballot is closed.${ballot.winner_id ? ' Winner declared below.' : ''}</div>`;
@@ -594,6 +620,33 @@
   }
 
   async function closeBallot(ballotId) {
+    const { data: votes } = await db.from('votes').select('restaurant_id').eq('ballot_id', ballotId);
+
+    if (votes && votes.length > 0) {
+      const counts = {};
+      votes.forEach(v => { counts[v.restaurant_id] = (counts[v.restaurant_id] || 0) + 1; });
+      const maxVotes = Math.max(...Object.values(counts));
+      const tied = Object.keys(counts).filter(id => counts[id] === maxVotes);
+
+      if (tied.length > 1) {
+        await db.from('ballots').update({ closed: true }).eq('id', ballotId);
+
+        const { data: newBallot, error } = await db.from('ballots')
+          .insert({ week_of: thisFriday(), closed: false, title: 'SUPER ULTRA MEGA DEATH TIE BREAKER FOR THE UNIVERSE!!!!' })
+          .select().single();
+
+        if (error) { flash('Failed to create tiebreaker!', 'error'); return; }
+
+        await db.from('ballot_options').insert(
+          tied.map(id => ({ ballot_id: newBallot.id, restaurant_id: id }))
+        );
+
+        flash('TIE DETECTED! SUPER ULTRA MEGA DEATH TIE BREAKER INITIATED!', 'error');
+        loadBallot();
+        return;
+      }
+    }
+
     const { error } = await db.from('ballots').update({ closed: true }).eq('id', ballotId);
     if (error) { flash('Failed to close ballot', 'error'); return; }
     loadBallot();
