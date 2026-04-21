@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friday Lunch Vote</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #333;
+    }
+
+    header {
+      background: #2d2d2d;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 1.4rem; }
+
+    .voter-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .voter-name input {
+      padding: 0.3rem 0.6rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      width: 140px;
+    }
+
+    nav {
+      background: #444;
+      display: flex;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: #ccc;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-bottom: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    nav button:hover { color: white; background: #555; }
+    nav button.active { color: white; border-bottom-color: #f0a500; }
+
+    main { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .section-header h2 { font-size: 1.2rem; }
+
+    .btn {
+      background: #f0a500;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #d4920a; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn.secondary { background: #666; }
+    .btn.secondary:hover { background: #444; }
+    .btn.danger { background: #dc3545; }
+    .btn.danger:hover { background: #b02a37; }
+    .btn.sm { padding: 0.3rem 0.65rem; font-size: 0.8rem; }
+
+    .btn-row { display: flex; gap: 0.5rem; }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .vote-card {
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .vote-card:hover:not(.closed-card) { border-color: #f0a500; transform: translateY(-1px); }
+    .vote-card.my-vote { border-color: #f0a500; background: #fffbf0; }
+    .vote-card.is-winner { border-color: #28a745; background: #f0fff4; }
+    .vote-card.closed-card { cursor: default; }
+
+    .bar-wrap { min-width: 160px; }
+
+    .vote-bar {
+      height: 8px;
+      background: #eee;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .vote-bar-fill {
+      height: 100%;
+      background: #f0a500;
+      border-radius: 4px;
+      transition: width 0.4s;
+    }
+
+    .vote-count { font-size: 0.8rem; color: #666; }
+    .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
+
+    .r-name { font-weight: 600; font-size: 1rem; }
+    .r-notes { font-size: 0.82rem; color: #666; margin-top: 2px; }
+    .r-meta { font-size: 0.74rem; color: #999; margin-top: 2px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #777;
+    }
+
+    .empty-state p { margin-bottom: 1rem; }
+
+    form.add-form {
+      background: white;
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 1.25rem;
+    }
+
+    form.add-form h3 { font-size: 0.95rem; margin-bottom: 0.75rem; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .fg { margin-bottom: 0.75rem; }
+    .fg label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.25rem; color: #555; }
+    .fg input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; font-family: inherit; }
+    .fg input:focus { outline: none; border-color: #f0a500; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge.winner { background: #d4edda; color: #155724; }
+
+    .banner {
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .banner.warn { background: #fff3cd; color: #856404; }
+    .banner.info { background: #d1ecf1; color: #0c5460; }
+    .banner.success { background: #d4edda; color: #155724; }
+    .banner.error { background: #f8d7da; color: #721c24; }
+
+    .pool-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .history-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-date { font-size: 0.8rem; color: #999; margin-top: 2px; }
+
+    .spinner { text-align: center; padding: 2rem; color: #aaa; font-size: 0.9rem; }
+
+    .voters { font-size: 0.78rem; color: #888; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Friday Lunch Vote</h1>
+  <div class="voter-name">
+    Your name:
+    <input type="text" id="voter-name-input" placeholder="Enter your name" maxlength="50">
+  </div>
+</header>
+
+<nav>
+  <button class="active" data-tab="this-week" onclick="switchTab(this)">This Week</button>
+  <button data-tab="pool" onclick="switchTab(this)">Restaurant Pool</button>
+  <button data-tab="history" onclick="switchTab(this)">History</button>
+</nav>
+
+<main>
+  <div id="flash"></div>
+
+  <div id="tab-this-week" class="tab-content active">
+    <div id="ballot-container"><div class="spinner">Loading...</div></div>
+  </div>
+
+  <div id="tab-pool" class="tab-content">
+    <form class="add-form" id="add-form">
+      <h3>Add a Restaurant</h3>
+      <div class="fg">
+        <label>Name</label>
+        <input id="new-name" type="text" placeholder="e.g. Joe's Tacos" required maxlength="100">
+      </div>
+      <div class="fg">
+        <label>Notes (optional)</label>
+        <input id="new-notes" type="text" placeholder="e.g. great for big groups, cash only" maxlength="200">
+      </div>
+      <button type="submit" class="btn">Add to Pool</button>
+    </form>
+    <div id="pool-list"><div class="spinner">Loading...</div></div>
+  </div>
+
+  <div id="tab-history" class="tab-content">
+    <div class="section-header"><h2>Where We've Been</h2></div>
+    <div id="history-list"><div class="spinner">Loading...</div></div>
+  </div>
+</main>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://wpllxvuyzemjsdbaljyp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwbGx4dnV5emVtanNkYmFsanlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjY2NTEsImV4cCI6MjA5MTk0MjY1MX0.MOTpzpp2ckzq62QwzxQae5cjoqLiqTaY9pSDrxBgZ-s';
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Persist voter name across sessions
+  const nameInput = document.getElementById('voter-name-input');
+  nameInput.value = localStorage.getItem('lunchVoterName') || '';
+  nameInput.addEventListener('change', () => {
+    localStorage.setItem('lunchVoterName', nameInput.value.trim());
+  });
+  const voterName = () => nameInput.value.trim();
+
+  // ── TABS ────────────────────────────────────────────────────────────────────
+  function switchTab(btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+    const tab = btn.dataset.tab;
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    btn.classList.add('active');
+    if (tab === 'this-week') loadBallot();
+    if (tab === 'pool') loadPool();
+    if (tab === 'history') loadHistory();
+  }
+
+  // ── FLASH MESSAGES ──────────────────────────────────────────────────────────
+  let flashTimer;
+  function flash(msg, type = 'info') {
+    clearTimeout(flashTimer);
+    document.getElementById('flash').innerHTML = `<div class="banner ${type}">${msg}</div>`;
+    flashTimer = setTimeout(() => { document.getElementById('flash').innerHTML = ''; }, 4000);
+  }
+
+  // ── THIS WEEK ───────────────────────────────────────────────────────────────
+  async function loadBallot() {
+    const el = document.getElementById('ballot-container');
+    el.innerHTML = '<div class="spinner">Loading...</div>';
+
+    const { data: ballots, error } = await db
+      .from('ballots')
+      .select('*, ballot_options(restaurant_id, restaurants(id, name, notes))')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) { el.innerHTML = `<div class="banner error">DB error: ${error.message}</div>`; return; }
+
+    if (!ballots || ballots.length === 0) {
+      renderNoBallot(el);
+      return;
+    }
+
+    const ballot = ballots[0];
+    const { data: votes } = await db.from('votes').select('restaurant_id, voter_name').eq('ballot_id', ballot.id);
+    renderBallot(el, ballot, votes || []);
+  }
+
+  function renderNoBallot(el) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <p>No ballot yet for this week.</p>
+        <button class="btn" onclick="generateBallot()">Generate This Week's Ballot</button>
+      </div>`;
+  }
+
+  function renderBallot(el, ballot, votes) {
+    const me = voterName();
+    const myVote = votes.find(v => v.voter_name.toLowerCase() === me.toLowerCase());
+    const counts = {};
+    ballot.ballot_options.forEach(o => { counts[o.restaurant_id] = 0; });
+    votes.forEach(v => { counts[v.restaurant_id] = (counts[v.restaurant_id] || 0) + 1; });
+    const maxCount = Math.max(...Object.values(counts), 1);
+
+    let html = `<div class="section-header"><h2>This Week's Ballot</h2><div class="btn-row">`;
+    if (!ballot.closed) {
+      html += `<button class="btn secondary sm" onclick="closeBallot('${ballot.id}')">Close</button>`;
+    }
+    html += `<button class="btn sm" onclick="generateBallot()">New Ballot</button></div></div>`;
+
+    if (ballot.closed) {
+      html += `<div class="banner warn">This ballot is closed.${ballot.winner_id ? ' Winner declared below.' : ''}</div>`;
+    }
+
+    if (!me && !ballot.closed) {
+      html += `<div class="banner info">Enter your name in the top-right corner to vote.</div>`;
+    }
+
+    html += ballot.ballot_options.map(opt => {
+      const r = opt.restaurants;
+      const count = counts[r.id] || 0;
+      const isMyVote = myVote && myVote.restaurant_id === r.id;
+      const isWinner = ballot.winner_id === r.id;
+      const pct = Math.round((count / maxCount) * 100);
+      const canVote = !ballot.closed && me;
+
+      let cls = 'vote-card';
+      if (isMyVote) cls += ' my-vote';
+      if (isWinner) cls += ' is-winner';
+      if (ballot.closed) cls += ' closed-card';
+
+      const onClick = canVote ? `onclick="castVote('${ballot.id}', '${r.id}')"` : '';
+
+      const winnerBtn = !ballot.closed && myVote && !ballot.winner_id
+        ? `<button class="btn sm" style="margin-top:6px" onclick="event.stopPropagation();markWinner('${ballot.id}','${r.id}')">Mark Winner</button>`
+        : '';
+
+      return `
+        <div class="card ${cls}" ${onClick}>
+          <div>
+            <div class="r-name">${escHtml(r.name)} ${isWinner ? '<span class="badge winner">Winner</span>' : ''}</div>
+            ${r.notes ? `<div class="r-notes">${escHtml(r.notes)}</div>` : ''}
+            ${isMyVote ? '<div class="r-meta">← your vote</div>' : ''}
+          </div>
+          <div class="bar-wrap">
+            <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}</div>
+            <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+            ${canVote && !myVote ? '<div class="hint">click to vote</div>' : ''}
+            ${winnerBtn}
+          </div>
+        </div>`;
+    }).join('');
+
+    const voterNames = [...new Set(votes.map(v => v.voter_name))];
+    if (voterNames.length > 0) {
+      html += `<div class="voters">Voted: ${voterNames.map(escHtml).join(', ')}</div>`;
+    }
+
+    el.innerHTML = html;
+  }
+
+  async function castVote(ballotId, restaurantId) {
+    const me = voterName();
+    if (!me) { flash('Enter your name first!', 'error'); return; }
+
+    const { error } = await db.from('votes').upsert(
+      { ballot_id: ballotId, restaurant_id: restaurantId, voter_name: me },
+      { onConflict: 'ballot_id,voter_name' }
+    );
+
+    if (error) { flash('Vote failed: ' + error.message, 'error'); return; }
+    loadBallot();
+  }
+
+  async function markWinner(ballotId, restaurantId) {
+    const { error } = await db.from('ballots')
+      .update({ closed: true, winner_id: restaurantId })
+      .eq('id', ballotId);
+
+    if (error) { flash('Failed to set winner', 'error'); return; }
+
+    await db.from('visits').insert({
+      restaurant_id: restaurantId,
+      visited_on: new Date().toISOString().split('T')[0]
+    });
+
+    flash('Winner recorded! Enjoy lunch!', 'success');
+    loadBallot();
+  }
+
+  async function closeBallot(ballotId) {
+    const { error } = await db.from('ballots').update({ closed: true }).eq('id', ballotId);
+    if (error) { flash('Failed to close ballot', 'error'); return; }
+    loadBallot();
+  }
+
+  async function generateBallot() {
+    const { data: restaurants } = await db.from('restaurants').select('*').eq('is_active', true);
+    if (!restaurants || restaurants.length === 0) {
+      flash('No restaurants in the pool yet! Add some first.', 'error');
+      return;
+    }
+
+    const { data: visits } = await db.from('visits').select('restaurant_id, visited_on');
+    const lastVisit = {};
+    (visits || []).forEach(v => {
+      if (!lastVisit[v.restaurant_id] || v.visited_on > lastVisit[v.restaurant_id]) {
+        lastVisit[v.restaurant_id] = v.visited_on;
+      }
+    });
+
+    const now = new Date();
+    const scored = restaurants.map(r => {
+      const lv = lastVisit[r.id];
+      const days = lv ? Math.floor((now - new Date(lv)) / 86400000) : 365;
+      return { r, score: Math.min(days + 1, 365) };
+    });
+
+    const selected = weightedPick(scored, Math.min(4, scored.length));
+
+    const { data: ballot, error } = await db
+      .from('ballots')
+      .insert({ week_of: thisFriday(), closed: false })
+      .select().single();
+
+    if (error) { flash('Failed to create ballot: ' + error.message, 'error'); return; }
+
+    await db.from('ballot_options').insert(
+      selected.map(r => ({ ballot_id: ballot.id, restaurant_id: r.id }))
+    );
+
+    flash('New ballot generated!', 'success');
+    loadBallot();
+  }
+
+  function weightedPick(scored, count) {
+    const pool = [...scored];
+    const picked = [];
+    for (let i = 0; i < count; i++) {
+      if (!pool.length) break;
+      const total = pool.reduce((s, x) => s + x.score, 0);
+      let rand = Math.random() * total;
+      for (let j = 0; j < pool.length; j++) {
+        rand -= pool[j].score;
+        if (rand <= 0) { picked.push(pool[j].r); pool.splice(j, 1); break; }
+      }
+    }
+    return picked;
+  }
+
+  function thisFriday() {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = day <= 5 ? 5 - day : 12 - day;
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split('T')[0];
+  }
+
+  // ── POOL ─────────────────────────────────────────────────────────────────────
+  async function loadPool() {
+    const el = document.getElementById('pool-list');
+    el.innerHTML = '<div class="spinner">Loading...</div>';
+
+    const { data: restaurants } = await db.from('restaurants').select('*').eq('is_active', true).order('name');
+    const { data: visits } = await db.from('visits').select('restaurant_id, visited_on');
+
+    const lastVisit = {};
+    (visits || []).forEach(v => {
+      if (!lastVisit[v.restaurant_id] || v.visited_on > lastVisit[v.restaurant_id]) {
+        lastVisit[v.restaurant_id] = v.visited_on;
+      }
+    });
+
+    if (!restaurants || restaurants.length === 0) {
+      el.innerHTML = '<div class="card">No restaurants yet. Add one above!</div>';
+      return;
+    }
+
+    el.innerHTML = restaurants.map(r => `
+      <div class="card pool-card">
+        <div>
+          <div class="r-name">${escHtml(r.name)}</div>
+          ${r.notes ? `<div class="r-notes">${escHtml(r.notes)}</div>` : ''}
+          <div class="r-meta">Added by ${escHtml(r.submitted_by || 'someone')}</div>
+          <div class="r-meta">${lastVisit[r.id] ? `Last visited: ${fmtDate(lastVisit[r.id])}` : 'Never visited'}</div>
+        </div>
+        <button class="btn danger sm" onclick="removeRestaurant('${r.id}')">Remove</button>
+      </div>`
+    ).join('');
+  }
+
+  document.getElementById('add-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('new-name').value.trim();
+    const notes = document.getElementById('new-notes').value.trim();
+    if (!name) return;
+
+    const { error } = await db.from('restaurants').insert({
+      name, notes, submitted_by: voterName() || 'anonymous', is_active: true
+    });
+
+    if (error) { flash('Failed to add: ' + error.message, 'error'); return; }
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-notes').value = '';
+    flash(`${name} added!`, 'success');
+    loadPool();
+  });
+
+  async function removeRestaurant(id) {
+    if (!confirm('Remove this restaurant from the pool?')) return;
+    await db.from('restaurants').update({ is_active: false }).eq('id', id);
+    loadPool();
+  }
+
+  // ── HISTORY ──────────────────────────────────────────────────────────────────
+  async function loadHistory() {
+    const el = document.getElementById('history-list');
+    el.innerHTML = '<div class="spinner">Loading...</div>';
+
+    const { data: ballots } = await db
+      .from('ballots')
+      .select('*, winner:winner_id(name)')
+      .eq('closed', true)
+      .order('week_of', { ascending: false });
+
+    if (!ballots || ballots.length === 0) {
+      el.innerHTML = '<div class="card">No history yet. Go have lunch!</div>';
+      return;
+    }
+
+    el.innerHTML = ballots.map(b => `
+      <div class="card history-card">
+        <div>
+          <div class="r-name">${b.winner ? escHtml(b.winner.name) : 'No winner recorded'}</div>
+          <div class="history-date">${fmtDate(b.week_of)}</div>
+        </div>
+        ${b.winner ? '<span class="badge winner">Winner</span>' : ''}
+      </div>`
+    ).join('');
+  }
+
+  // ── UTILS ─────────────────────────────────────────────────────────────────────
+  function fmtDate(d) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    });
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Boot
+  loadBallot();
+</script>
+</body>
+</html>
