@@ -522,9 +522,10 @@
     const name = document.getElementById('new-name').value.trim();
     const notes = document.getElementById('new-notes').value.trim();
     if (!name) return;
+    if (!voterName()) { flash('Enter your name first!', 'error'); return; }
 
     const { error } = await db.from('restaurants').insert({
-      name, notes, submitted_by: voterName() || 'anonymous', is_active: true
+      name, notes, submitted_by: voterName(), is_active: true
     });
 
     if (error) { flash('Failed to add: ' + error.message, 'error'); return; }
