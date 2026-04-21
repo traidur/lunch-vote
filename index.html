@@ -375,7 +375,6 @@
 
   // ── AI IMAGES ───────────────────────────────────────────────────────────────
   let _restaurantCache = {};
-  const EDGE_IMAGE_URL = `${SUPABASE_URL}/functions/v1/restaurant-image`;
 
   async function ensureImageSeeds(restaurants) {
     const missing = restaurants.filter(r => !r.image_seed);
@@ -386,44 +385,40 @@
     }
   }
 
-  async function fetchRestaurantImage(r) {
-    if (r.image_url) return r.image_url;
-    try {
-      const res = await fetch(EDGE_IMAGE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ id: r.id, name: r.name, seed: r.image_seed })
-      });
-      const data = await res.json();
-      if (data.url) r.image_url = data.url;
-      return data.url || null;
-    } catch { return null; }
+  function restaurantImageUrl(r) {
+    const prompt = encodeURIComponent(
+      `high quality image of a made-up realistic looking mascot for ${r.name}, wearing merch and branded clothing from ${r.name}, standing in front of the ${r.name} restaurant with a big banner displaying the name ${r.name}, photorealistic, detailed, vibrant`
+    );
+    return `https://image.pollinations.ai/prompt/${prompt}?seed=${r.image_seed}&width=600&height=380&nologo=true&model=flux`;
   }
 
-  async function loadRestaurantImages(restaurants) {
-    await Promise.all(restaurants.map(async r => {
-      const url = await fetchRestaurantImage(r);
-      if (!url) return;
+  function loadRestaurantImages(restaurants) {
+    restaurants.forEach(r => {
       const img = document.getElementById(`rimg-${r.id}`);
-      if (img) { img.src = url; img.classList.add('loaded'); }
-    }));
+      if (!img) return;
+      const url = r.image_url || restaurantImageUrl(r);
+      img.onload = () => {
+        img.classList.add('loaded');
+        if (!r.image_url) {
+          db.from('restaurants').update({ image_url: url }).eq('id', r.id);
+          r.image_url = url;
+        }
+      };
+      img.onerror = () => { const s = img.src; img.src = ''; setTimeout(() => img.src = s, 4000); };
+      img.src = url;
+    });
   }
 
-  async function showWinnerModal(restaurantId) {
+  function showWinnerModal(restaurantId) {
     const r = _restaurantCache[restaurantId];
     if (!r) return;
     document.getElementById('winner-modal-name').textContent = r.name;
     document.getElementById('winner-modal').classList.add('active');
-    const url = await fetchRestaurantImage(r);
-    if (url) {
-      const img = document.getElementById('winner-modal-img');
-      img.src = url;
-      img.onload = () => img.classList.add('loaded');
-    }
+    const img = document.getElementById('winner-modal-img');
+    const url = r.image_url || restaurantImageUrl(r);
+    img.onload = () => img.classList.add('loaded');
+    img.onerror = () => { const s = img.src; img.src = ''; setTimeout(() => img.src = s, 4000); };
+    img.src = url;
   }
 
   // ── TABS ────────────────────────────────────────────────────────────────────
@@ -689,10 +684,13 @@
 
   async function generateAllImages() {
     const { data: restaurants } = await db.from('restaurants').select('*').eq('is_active', true);
-    const missing = (restaurants || []).filter(r => !r.image_url);
-    if (!missing.length) return;
-    await Promise.all(missing.map(r => fetchRestaurantImage(r)));
-    loadPool();
+    const missing = (restaurants || []).filter(r => !r.image_url && r.image_seed);
+    missing.forEach(r => {
+      const url = restaurantImageUrl(r);
+      const img = new Image();
+      img.onload = () => db.from('restaurants').update({ image_url: url }).eq('id', r.id);
+      img.src = url;
+    });
   }
 
   document.getElementById('add-form').addEventListener('submit', async e => {
