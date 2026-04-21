@@ -621,7 +621,8 @@
       return { r, score: Math.min(days + 1, 365) };
     });
 
-    const selected = weightedPick(scored, Math.min(4, scored.length));
+    const count = Math.min(Math.max(Math.ceil(scored.length / 3), 4), scored.length);
+    const selected = weightedPick(scored, count);
 
     const { data: ballot, error } = await db
       .from('ballots')
