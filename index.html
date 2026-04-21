@@ -400,7 +400,12 @@
       const img = document.getElementById(`rimg-${r.id}`);
       if (!img) return;
       const url = r.image_url || restaurantImageUrl(r);
+      const giveUp = setTimeout(() => {
+        const wrap = img.closest('.vote-img-wrap');
+        if (wrap && !img.classList.contains('loaded')) wrap.style.display = 'none';
+      }, 20000);
       img.onload = () => {
+        clearTimeout(giveUp);
         img.classList.add('loaded');
         if (!r.image_url) {
           db.from('restaurants').update({ image_url: url }).eq('id', r.id);
@@ -471,8 +476,15 @@
     loadRestaurantImages(restaurants);
   }
 
+  function preThursdayBanner() {
+    const dow = todayDow();
+    if (dow >= 4 || dow === 0) return '';
+    return `<div class="banner info">Get your restaurant suggestions into the pool now — ballot opens Thursday, kids!</div>`;
+  }
+
   function renderNoBallot(el) {
     el.innerHTML = `
+      ${preThursdayBanner()}
       <div class="empty-state">
         <p>No ballot yet for this week.</p>
         ${canGenerateBallot() ? `<button class="btn" onclick="generateBallot()">Generate This Week's Ballot</button>` : `<p style="color:#aaa;font-size:0.85rem;margin-top:0.5rem">Ballot generation opens on Thursday.</p>`}
@@ -498,6 +510,7 @@
 
     if (ballot.closed) {
       html += `<div class="banner warn">This ballot is closed.${ballot.winner_id ? ' Winner declared below.' : ''}</div>`;
+      html += preThursdayBanner();
     }
 
     if (!me && !ballot.closed) {
