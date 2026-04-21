@@ -391,7 +391,11 @@
     try {
       const res = await fetch(EDGE_IMAGE_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
         body: JSON.stringify({ id: r.id, name: r.name, seed: r.image_seed })
       });
       const data = await res.json();
