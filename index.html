@@ -108,15 +108,98 @@
       border: 2px solid transparent;
       transition: border-color 0.15s, transform 0.1s;
       display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .vote-card:hover:not(.closed-card) { border-color: #f0a500; transform: translateY(-1px); }
+    .vote-card.my-vote { border-color: #f0a500; }
+    .vote-card.my-vote .vote-body { background: #fffbf0; }
+    .vote-card.is-winner { border-color: #28a745; }
+    .vote-card.is-winner .vote-body { background: #f0fff4; }
+    .vote-card.closed-card { cursor: default; }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .vote-img-wrap {
+      position: relative;
+      width: 100%;
+      height: 190px;
+      background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      overflow: hidden;
+    }
+
+    .vote-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .vote-img.loaded { opacity: 1; }
+
+    .vote-body {
+      padding: 1rem 1.25rem;
+      display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
     }
 
-    .vote-card:hover:not(.closed-card) { border-color: #f0a500; transform: translateY(-1px); }
-    .vote-card.my-vote { border-color: #f0a500; background: #fffbf0; }
-    .vote-card.is-winner { border-color: #28a745; background: #f0fff4; }
-    .vote-card.closed-card { cursor: default; }
+    .winner-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .winner-modal.active { display: flex; }
+    .winner-modal-inner {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+    .winner-modal-img-wrap {
+      position: relative;
+      width: 100%;
+      height: 320px;
+      background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      overflow: hidden;
+    }
+
+    .winner-modal-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .winner-modal-img.loaded { opacity: 1; }
+    .winner-modal-body { padding: 1.5rem; }
+    .winner-modal-name { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .winner-modal-sub { color: #666; margin-bottom: 1.25rem; font-size: 0.95rem; }
 
     .bar-wrap { min-width: 160px; }
 
@@ -254,6 +337,17 @@
   </div>
 </main>
 
+<div id="winner-modal" class="winner-modal" onclick="this.classList.remove('active')">
+  <div class="winner-modal-inner" onclick="event.stopPropagation()">
+    <div class="winner-modal-img-wrap"><img id="winner-modal-img" class="winner-modal-img" src="" alt="winner" onload="this.classList.add('loaded')" onerror="const s=this.src;this.src='';setTimeout(()=>this.src=s,4000)"></div>
+    <div class="winner-modal-body">
+      <div class="winner-modal-name" id="winner-modal-name"></div>
+      <div class="winner-modal-sub">WINNER WINNER FRIDAY LUNCH DINNER</div>
+      <button class="btn" onclick="document.getElementById('winner-modal').classList.remove('active')">Let's Eat!</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ── CONFIG ──────────────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://wpllxvuyzemjsdbaljyp.supabase.co';
@@ -279,6 +373,54 @@
   const _d = e => e.map((h,i) => String.fromCharCode((parseInt(h,16) - i*7) ^ 73)).reverse().join('');
   const isAdmin = () => _a.some(e => _d(e) === voterName().toLowerCase());
 
+  // ── AI IMAGES ───────────────────────────────────────────────────────────────
+  let _restaurantCache = {};
+  const EDGE_IMAGE_URL = `${SUPABASE_URL}/functions/v1/restaurant-image`;
+
+  async function ensureImageSeeds(restaurants) {
+    const missing = restaurants.filter(r => !r.image_seed);
+    for (const r of missing) {
+      const seed = Math.floor(Math.random() * 9999999) + 1;
+      await db.from('restaurants').update({ image_seed: seed }).eq('id', r.id);
+      r.image_seed = seed;
+    }
+  }
+
+  async function fetchRestaurantImage(r) {
+    if (r.image_url) return r.image_url;
+    try {
+      const res = await fetch(EDGE_IMAGE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ id: r.id, name: r.name, seed: r.image_seed })
+      });
+      const data = await res.json();
+      if (data.url) r.image_url = data.url;
+      return data.url || null;
+    } catch { return null; }
+  }
+
+  async function loadRestaurantImages(restaurants) {
+    await Promise.all(restaurants.map(async r => {
+      const url = await fetchRestaurantImage(r);
+      if (!url) return;
+      const img = document.getElementById(`rimg-${r.id}`);
+      if (img) { img.src = url; img.classList.add('loaded'); }
+    }));
+  }
+
+  async function showWinnerModal(restaurantId) {
+    const r = _restaurantCache[restaurantId];
+    if (!r) return;
+    document.getElementById('winner-modal-name').textContent = r.name;
+    document.getElementById('winner-modal').classList.add('active');
+    const url = await fetchRestaurantImage(r);
+    if (url) {
+      const img = document.getElementById('winner-modal-img');
+      img.src = url;
+      img.onload = () => img.classList.add('loaded');
+    }
+  }
 
   // ── TABS ────────────────────────────────────────────────────────────────────
   function switchTab(btn) {
@@ -307,7 +449,7 @@
 
     const { data: ballots, error } = await db
       .from('ballots')
-      .select('*, ballot_options(restaurant_id, restaurants(id, name, notes))')
+      .select('*, ballot_options(restaurant_id, restaurants(id, name, notes, image_seed, image_url))')
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -319,8 +461,12 @@
     }
 
     const ballot = ballots[0];
+    const restaurants = ballot.ballot_options.map(o => o.restaurants);
+    await ensureImageSeeds(restaurants);
+    restaurants.forEach(r => { _restaurantCache[r.id] = r; });
     const { data: votes } = await db.from('votes').select('restaurant_id, voter_name').eq('ballot_id', ballot.id);
     renderBallot(el, ballot, votes || []);
+    loadRestaurantImages(restaurants);
   }
 
   function renderNoBallot(el) {
@@ -374,16 +520,19 @@
 
       return `
         <div class="card ${cls}" ${onClick}>
-          <div>
-            <div class="r-name">${escHtml(r.name)} ${isWinner ? '<span class="badge winner">Winner</span>' : ''}</div>
-            ${r.notes ? `<div class="r-notes">${escHtml(r.notes)}</div>` : ''}
-            ${isMyVote ? '<div class="r-meta">← your vote</div>' : ''}
-          </div>
-          <div class="bar-wrap">
-            <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}</div>
-            <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
-            ${canVote && !myVote ? '<div class="hint">click to vote</div>' : ''}
-            ${winnerBtn}
+          <div class="vote-img-wrap"><img id="rimg-${r.id}" class="vote-img${r.image_url ? ' loaded' : ''}" src="${r.image_url || ''}" alt="${escHtml(r.name)}"></div>
+          <div class="vote-body">
+            <div>
+              <div class="r-name">${escHtml(r.name)} ${isWinner ? '<span class="badge winner">Winner</span>' : ''}</div>
+              ${r.notes ? `<div class="r-notes">${escHtml(r.notes)}</div>` : ''}
+              ${isMyVote ? '<div class="r-meta">← your vote</div>' : ''}
+            </div>
+            <div class="bar-wrap">
+              <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}</div>
+              <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+              ${canVote && !myVote ? '<div class="hint">click to vote</div>' : ''}
+              ${winnerBtn}
+            </div>
           </div>
         </div>`;
     }).join('');
@@ -422,6 +571,7 @@
     });
 
     flash('Winner recorded! Enjoy lunch!', 'success');
+    showWinnerModal(restaurantId);
     loadBallot();
   }
 
@@ -513,7 +663,14 @@
       return;
     }
 
-    el.innerHTML = restaurants.map(r => `
+    const needsImages = restaurants.filter(r => !r.image_url);
+    if (needsImages.length) generateAllImages();
+
+    const genBtn = isAdmin() && needsImages.length > 0
+      ? `<button class="btn sm" onclick="generateAllImages()">Generate All Images (${needsImages.length})</button>`
+      : '';
+
+    el.innerHTML = `<div class="section-header"><h2>Restaurant Pool</h2>${genBtn}</div>` + restaurants.map(r => `
       <div class="card pool-card">
         <div>
           <div class="r-name">${escHtml(r.name)}</div>
@@ -526,6 +683,16 @@
     ).join('');
   }
 
+  async function generateAllImages() {
+    const { data: restaurants } = await db.from('restaurants').select('*').eq('is_active', true);
+    const missing = (restaurants || []).filter(r => !r.image_url);
+    if (!missing.length) { flash('All images already generated!', 'success'); return; }
+    flash(`Generating ${missing.length} images in the background...`, 'info');
+    await Promise.all(missing.map(r => fetchRestaurantImage(r)));
+    flash('All images generated!', 'success');
+    loadPool();
+  }
+
   document.getElementById('add-form').addEventListener('submit', async e => {
     e.preventDefault();
     const name = document.getElementById('new-name').value.trim();
@@ -533,14 +700,16 @@
     if (!name) return;
     if (!voterName()) { flash('Enter your name first!', 'error'); return; }
 
-    const { error } = await db.from('restaurants').insert({
-      name, notes, submitted_by: voterName(), is_active: true
-    });
+    const seed = Math.floor(Math.random() * 9999999) + 1;
+    const { data: newR, error } = await db.from('restaurants').insert({
+      name, notes, submitted_by: voterName(), is_active: true, image_seed: seed
+    }).select().single();
 
     if (error) { flash('Failed to add: ' + error.message, 'error'); return; }
     document.getElementById('new-name').value = '';
     document.getElementById('new-notes').value = '';
     flash(`${name} added!`, 'success');
+    fetchRestaurantImage(newR);
     loadPool();
   });
 
