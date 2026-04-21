@@ -371,7 +371,10 @@
     ['2d','2f','39','43','43','49','65','6e','72']
   ];
   const _d = e => e.map((h,i) => String.fromCharCode((parseInt(h,16) - i*7) ^ 73)).reverse().join('');
-  const isAdmin = () => _a.some(e => _d(e) === voterName().toLowerCase());
+  const isDogWhisperer = () => _a.some(e => _d(e) === voterName().toLowerCase());
+  const todayDow = () => new Date().getDay();
+  const canGenerateBallot = () => todayDow() === 4 || isDogWhisperer();
+  const canCloseBallot = () => todayDow() === 5 || isDogWhisperer();
 
   // ── AI IMAGES ───────────────────────────────────────────────────────────────
   let _restaurantCache = {};
@@ -472,7 +475,7 @@
     el.innerHTML = `
       <div class="empty-state">
         <p>No ballot yet for this week.</p>
-        <button class="btn" onclick="generateBallot()">Generate This Week's Ballot</button>
+        ${canGenerateBallot() ? `<button class="btn" onclick="generateBallot()">Generate This Week's Ballot</button>` : `<p style="color:#aaa;font-size:0.85rem;margin-top:0.5rem">Ballot generation opens on Thursday.</p>`}
       </div>`;
   }
 
@@ -485,10 +488,13 @@
     const maxCount = Math.max(...Object.values(counts), 1);
 
     let html = `<div class="section-header"><h2>This Week's Ballot</h2><div class="btn-row">`;
-    if (!ballot.closed) {
+    if (!ballot.closed && canCloseBallot()) {
       html += `<button class="btn secondary sm" onclick="closeBallot('${ballot.id}')">Close</button>`;
     }
-    html += `<button class="btn sm" onclick="generateBallot()">New Ballot</button></div></div>`;
+    if (canGenerateBallot()) {
+      html += `<button class="btn sm" onclick="generateBallot()">New Ballot</button>`;
+    }
+    html += `</div></div>`;
 
     if (ballot.closed) {
       html += `<div class="banner warn">This ballot is closed.${ballot.winner_id ? ' Winner declared below.' : ''}</div>`;
@@ -665,7 +671,7 @@
     const needsImages = restaurants.filter(r => !r.image_url);
     if (needsImages.length) generateAllImages();
 
-    const genBtn = isAdmin() && needsImages.length > 0
+    const genBtn = isDogWhisperer() && needsImages.length > 0
       ? `<button class="btn sm" onclick="generateAllImages()">Generate All Images (${needsImages.length})</button>`
       : '';
 
@@ -677,7 +683,13 @@
           <div class="r-meta">Added by ${escHtml(r.submitted_by || 'someone')}</div>
           <div class="r-meta">${lastVisit[r.id] ? `Last visited: ${fmtDate(lastVisit[r.id])}` : 'Never visited'}</div>
         </div>
-        ${isAdmin() ? `<button class="btn danger sm" onclick="removeRestaurant('${r.id}')">Remove</button>` : ''}
+        ${isDogWhisperer() ? `
+          <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end">
+            ${lastVisit[r.id]
+              ? `<button class="btn secondary sm" onclick="clearVisits('${r.id}')">Clear Visits</button>`
+              : `<button class="btn secondary sm" onclick="markVisited('${r.id}')">Mark Visited</button>`}
+            <button class="btn danger sm" onclick="removeRestaurant('${r.id}')">Remove</button>
+          </div>` : ''}
       </div>`
     ).join('');
   }
@@ -709,14 +721,28 @@
     document.getElementById('new-name').value = '';
     document.getElementById('new-notes').value = '';
     flash(`${name} added!`, 'success');
-    fetchRestaurantImage(newR);
+    const preUrl = restaurantImageUrl(newR);
+    const preImg = new Image();
+    preImg.onload = () => db.from('restaurants').update({ image_url: preUrl }).eq('id', newR.id);
+    preImg.src = preUrl;
     loadPool();
   });
 
   async function removeRestaurant(id) {
-    if (!isAdmin()) { flash('Uh uh uh, you didn\'t say the magic word!', 'error'); return; }
+    if (!isDogWhisperer()) { flash('Uh uh uh, you didn\'t say the magic word!', 'error'); return; }
     if (!confirm('Remove this restaurant from the pool?')) return;
     await db.from('restaurants').update({ is_active: false }).eq('id', id);
+    loadPool();
+  }
+
+  async function markVisited(id) {
+    await db.from('visits').insert({ restaurant_id: id, visited_on: new Date().toISOString().split('T')[0] });
+    loadPool();
+  }
+
+  async function clearVisits(id) {
+    if (!confirm('Clear all visit history for this restaurant?')) return;
+    await db.from('visits').delete().eq('restaurant_id', id);
     loadPool();
   }
 
