@@ -339,7 +339,7 @@
 
 <div id="winner-modal" class="winner-modal" onclick="this.classList.remove('active')">
   <div class="winner-modal-inner" onclick="event.stopPropagation()">
-    <div class="winner-modal-img-wrap"><img id="winner-modal-img" class="winner-modal-img" src="" alt="winner" onload="this.classList.add('loaded')" onerror="const s=this.src;this.src='';setTimeout(()=>this.src=s,4000)"></div>
+    <div class="winner-modal-img-wrap"><img id="winner-modal-img" class="winner-modal-img" alt="winner"></div>
     <div class="winner-modal-body">
       <div class="winner-modal-name" id="winner-modal-name"></div>
       <div class="winner-modal-sub">WINNER WINNER FRIDAY LUNCH DINNER</div>
@@ -412,7 +412,7 @@
           r.image_url = url;
         }
       };
-      img.onerror = () => { const s = img.src; img.src = ''; setTimeout(() => img.src = s, 4000); };
+      img.onerror = () => { const s = img.src; img.removeAttribute('src'); setTimeout(() => img.src = s, 4000); };
       img.src = url;
     });
   }
@@ -425,7 +425,7 @@
     const img = document.getElementById('winner-modal-img');
     const url = r.image_url || restaurantImageUrl(r);
     img.onload = () => img.classList.add('loaded');
-    img.onerror = () => { const s = img.src; img.src = ''; setTimeout(() => img.src = s, 4000); };
+    img.onerror = () => { const s = img.src; img.removeAttribute('src'); setTimeout(() => img.src = s, 4000); };
     img.src = url;
   }
 
@@ -538,7 +538,7 @@
 
       return `
         <div class="card ${cls}" ${onClick}>
-          <div class="vote-img-wrap"><img id="rimg-${r.id}" class="vote-img${r.image_url ? ' loaded' : ''}" src="${r.image_url || ''}" alt="${escHtml(r.name)}"></div>
+          <div class="vote-img-wrap"><img id="rimg-${r.id}" class="vote-img${r.image_url ? ' loaded' : ''}" ${r.image_url ? `src="${r.image_url}"` : ''} alt="${escHtml(r.name)}"></div>
           <div class="vote-body">
             <div>
               <div class="r-name">${escHtml(r.name)} ${isWinner ? '<span class="badge winner">Winner</span>' : ''}</div>
