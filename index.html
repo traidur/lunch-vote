@@ -686,10 +686,8 @@
   async function generateAllImages() {
     const { data: restaurants } = await db.from('restaurants').select('*').eq('is_active', true);
     const missing = (restaurants || []).filter(r => !r.image_url);
-    if (!missing.length) { flash('All images already generated!', 'success'); return; }
-    flash(`Generating ${missing.length} images in the background...`, 'info');
+    if (!missing.length) return;
     await Promise.all(missing.map(r => fetchRestaurantImage(r)));
-    flash('All images generated!', 'success');
     loadPool();
   }
 
