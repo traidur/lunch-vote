@@ -392,8 +392,8 @@
   const _d = e => e.map((h,i) => String.fromCharCode((parseInt(h,16) - i*7) ^ 73)).reverse().join('');
   const isDogWhisperer = () => _a.some(e => _d(e) === voterName().toLowerCase());
   const todayDow = () => new Date().getDay();
-  const canGenerateBallot = () => todayDow() === 4 || isDogWhisperer();
-  const canCloseBallot = () => todayDow() === 5 || isDogWhisperer();
+  const canGenerateBallot = () => isDogWhisperer();
+  const canCloseBallot = () => isDogWhisperer();
 
   // ── AI IMAGES ───────────────────────────────────────────────────────────────
   let _restaurantCache = {};
@@ -558,7 +558,7 @@
 
       const onClick = canVote ? `onclick="castVote('${ballot.id}', '${r.id}')"` : '';
 
-      const winnerBtn = !ballot.closed && myVote && !ballot.winner_id
+      const winnerBtn = !ballot.closed && myVote && !ballot.winner_id && isDogWhisperer()
         ? `<button class="btn sm" style="margin-top:6px" onclick="event.stopPropagation();markWinner('${ballot.id}','${r.id}')">Mark Winner</button>`
         : '';
 
