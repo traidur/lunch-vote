@@ -238,6 +238,7 @@
     }
 
     .vote-count { font-size: 0.8rem; color: #666; }
+    .voter-names { color: #999; font-style: italic; }
     .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
 
     .r-name { font-weight: 600; font-size: 1rem; }
@@ -514,8 +515,9 @@
     const me = voterName();
     const myVote = votes.find(v => v.voter_name.toLowerCase() === me.toLowerCase());
     const counts = {};
-    ballot.ballot_options.forEach(o => { counts[o.restaurant_id] = 0; });
-    votes.forEach(v => { counts[v.restaurant_id] = (counts[v.restaurant_id] || 0) + 1; });
+    const votersByRestaurant = {};
+    ballot.ballot_options.forEach(o => { counts[o.restaurant_id] = 0; votersByRestaurant[o.restaurant_id] = []; });
+    votes.forEach(v => { counts[v.restaurant_id] = (counts[v.restaurant_id] || 0) + 1; votersByRestaurant[v.restaurant_id].push(v.voter_name); });
     const maxCount = Math.max(...Object.values(counts), 1);
 
     const isTiebreaker = !!ballot.title;
@@ -572,7 +574,7 @@
               ${isMyVote ? '<div class="r-meta">← your vote</div>' : ''}
             </div>
             <div class="bar-wrap">
-              <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}</div>
+              <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}${votersByRestaurant[r.id].length ? ` <span class="voter-names">(${votersByRestaurant[r.id].map(escHtml).join(', ')})</span>` : ''}</div>
               <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
               ${canVote && !myVote ? '<div class="hint">click to vote</div>' : ''}
               ${winnerBtn}
