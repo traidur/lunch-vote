@@ -28,8 +28,9 @@ create table votes (
   ballot_id uuid references ballots(id) on delete cascade,
   restaurant_id uuid references restaurants(id),
   voter_name text not null,
+  device_id text not null,
   voted_at timestamptz default now(),
-  unique(ballot_id, voter_name)
+  unique(ballot_id, device_id)
 );
 
 create table visits (

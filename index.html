@@ -385,6 +385,13 @@
   });
   const voterName = () => nameInput.value.trim();
 
+  // Stable device ID — one vote per browser regardless of name changes
+  const deviceId = (() => {
+    let id = localStorage.getItem('lunchDeviceId');
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem('lunchDeviceId', id); }
+    return id;
+  })();
+
   const _a = [
     ['3d','2f','3a','36','46','8c','56','52','75'],
     ['3b','2f','4b','4f','48','47','50','52'],
@@ -392,6 +399,9 @@
   ];
   const _d = e => e.map((h,i) => String.fromCharCode((parseInt(h,16) - i*7) ^ 73)).reverse().join('');
   const isDogWhisperer = () => _a.some(e => _d(e) === voterName().toLowerCase());
+  const maskVoterName = name => _a.some(e => _d(e) === name.toLowerCase())
+    ? name.replace(/./g, () => String.fromCharCode(97 + Math.floor(Math.random() * 26)))
+    : escHtml(name);
   const todayDow = () => new Date().getDay();
   const canGenerateBallot = () => isDogWhisperer();
   const canCloseBallot = () => isDogWhisperer();
@@ -491,7 +501,7 @@
     const restaurants = ballot.ballot_options.map(o => o.restaurants);
     await ensureImageSeeds(restaurants);
     restaurants.forEach(r => { _restaurantCache[r.id] = r; });
-    const { data: votes } = await db.from('votes').select('restaurant_id, voter_name').eq('ballot_id', ballot.id);
+    const { data: votes } = await db.from('votes').select('restaurant_id, voter_name, device_id').eq('ballot_id', ballot.id);
     renderBallot(el, ballot, votes || []);
     loadRestaurantImages(restaurants);
   }
@@ -513,7 +523,7 @@
 
   function renderBallot(el, ballot, votes) {
     const me = voterName();
-    const myVote = votes.find(v => v.voter_name.toLowerCase() === me.toLowerCase());
+    const myVote = votes.find(v => v.device_id === deviceId);
     const counts = {};
     const votersByRestaurant = {};
     ballot.ballot_options.forEach(o => { counts[o.restaurant_id] = 0; votersByRestaurant[o.restaurant_id] = []; });
@@ -574,7 +584,7 @@
               ${isMyVote ? '<div class="r-meta">← your vote</div>' : ''}
             </div>
             <div class="bar-wrap">
-              <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}${votersByRestaurant[r.id].length ? ` <span class="voter-names">(${votersByRestaurant[r.id].map(escHtml).join(', ')})</span>` : ''}</div>
+              <div class="vote-count">${count} vote${count !== 1 ? 's' : ''}${votersByRestaurant[r.id].length ? ` <span class="voter-names">(${votersByRestaurant[r.id].map(maskVoterName).join(', ')})</span>` : ''}</div>
               <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
               ${canVote && !myVote ? '<div class="hint">click to vote</div>' : ''}
               ${winnerBtn}
@@ -585,7 +595,7 @@
 
     const voterNames = [...new Set(votes.map(v => v.voter_name))];
     if (voterNames.length > 0) {
-      html += `<div class="voters">Voted: ${voterNames.map(escHtml).join(', ')}</div>`;
+      html += `<div class="voters">Voted: ${voterNames.map(maskVoterName).join(', ')}</div>`;
     }
 
     el.innerHTML = html;
@@ -596,8 +606,8 @@
     if (!me) { flash('Enter your name first!', 'error'); return; }
 
     const { error } = await db.from('votes').upsert(
-      { ballot_id: ballotId, restaurant_id: restaurantId, voter_name: me },
-      { onConflict: 'ballot_id,voter_name' }
+      { ballot_id: ballotId, restaurant_id: restaurantId, voter_name: me, device_id: deviceId },
+      { onConflict: 'ballot_id,device_id' }
     );
 
     if (error) { flash('Vote failed: ' + error.message, 'error'); return; }
