@@ -1100,6 +1100,7 @@
     _geoChaos();
     _premStrip();
     _startFontChaos();
+    _startInfScroll();
     document.addEventListener('mousedown', _clickBlip);
     setTimeout(_cookieBanner, 1200);
     setTimeout(_millVoter, 6000);
@@ -1729,6 +1730,29 @@
 
   function _startFontChaos() {
     document.addEventListener('click', _fontChaos);
+  }
+
+  // ── INFINITE SCROLL ───────────────────────────────────────────────────────────
+  let _infScrollActive = false;
+
+  function _startInfScroll() {
+    if (_infScrollActive) return;
+    _infScrollActive = true;
+    window.addEventListener('scroll', _infScrollCheck);
+  }
+
+  function _infScrollCheck() {
+    const scrollBottom = window.innerHeight + window.scrollY;
+    const docHeight = document.documentElement.scrollHeight;
+    if (scrollBottom >= docHeight - 50) {
+      const main = document.querySelector('main');
+      if (!main) return;
+      const clone = main.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.classList.add('_inf-clone');
+      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+      main.parentElement.insertBefore(clone, main.nextSibling);
+    }
   }
 
   // ── UTILS ─────────────────────────────────────────────────────────────────────
