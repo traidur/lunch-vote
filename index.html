@@ -239,6 +239,43 @@
 
     .vote-count { font-size: 0.8rem; color: #666; }
     .voter-names { color: #999; font-style: italic; }
+
+    /* ── SHITIFICATION ──────────────────────────────────────────────────────── */
+    ._ps { background:linear-gradient(90deg,#1e3a5f,#2563eb); color:#fff; text-align:center; padding:8px 16px; font-size:0.82rem; display:flex; align-items:center; justify-content:center; gap:12px; }
+    ._ps-btn { background:#f59e0b; color:#000; border:none; padding:4px 14px; border-radius:4px; font-size:0.75rem; font-weight:700; cursor:pointer; }
+    ._ps-x { cursor:pointer; opacity:0.4; margin-left:8px; }
+    ._ck { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#ddd; padding:14px 20px; z-index:9999; display:flex; gap:12px; align-items:center; font-size:0.78rem; box-shadow:0 -4px 20px rgba(0,0,0,0.5); }
+    ._ck p { flex:1; margin:0; line-height:1.5; }
+    ._ck-acc { background:#22c55e; color:#fff; border:none; padding:8px 18px; border-radius:6px; cursor:pointer; font-weight:700; white-space:nowrap; }
+    ._ck-rej { background:transparent; color:#999; border:1px solid #555; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:0.72rem; white-space:nowrap; transition:transform 0.2s ease; display:inline-block; }
+    ._mv-ov { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; }
+    ._mv-box { background:#fff; border-radius:16px; padding:32px 28px; max-width:400px; width:90%; text-align:center; }
+    ._mv-box h2 { color:#f59e0b; font-size:1.8rem; margin:0 0 8px; }
+    ._mv-box p { color:#555; margin:0 0 20px; font-size:0.9rem; }
+    ._mv-claim { background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; border:none; padding:12px 28px; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; animation:_pulse 1.2s infinite; }
+    ._mv-no { display:block; margin-top:10px; color:#ccc; font-size:0.68rem; cursor:pointer; background:none; border:none; }
+    ._at-wrap { position:fixed; bottom:24px; right:24px; z-index:9998; display:flex; flex-direction:column-reverse; gap:8px; pointer-events:none; max-width:280px; }
+    ._at { background:#fff; border-radius:8px; padding:10px 14px; font-size:0.8rem; box-shadow:0 4px 16px rgba(0,0,0,0.15); border-left:4px solid #22c55e; }
+    ._sv-ov { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10000; display:flex; align-items:center; justify-content:center; }
+    ._sv-box { background:#fff; border-radius:12px; padding:28px; max-width:400px; width:90%; }
+    ._sv-box h3 { margin:0 0 2px; }
+    ._sv-prog { color:#888; font-size:0.78rem; margin:0 0 18px; }
+    ._sv-q p { font-weight:600; margin:0 0 10px; }
+    ._sv-q label { display:block; margin-bottom:5px; font-size:0.88rem; cursor:pointer; }
+    ._sv-next { background:#3b82f6; color:#fff; border:none; padding:9px 22px; border-radius:6px; cursor:pointer; font-weight:600; }
+    ._sv-skip { background:none; border:none; color:#ccc; font-size:0.7rem; cursor:pointer; margin-left:10px; }
+    ._ad { background:linear-gradient(135deg,#fffbeb,#fef3c7); border:2px dashed #f59e0b; border-radius:8px; padding:18px; text-align:center; margin:6px 0; position:relative; }
+    ._ad::before { content:'ADVERTISEMENT'; position:absolute; top:-9px; left:50%; transform:translateX(-50%); background:#f59e0b; color:#000; font-size:0.58rem; font-weight:700; padding:2px 8px; border-radius:3px; letter-spacing:1px; }
+    ._ad-h { font-size:1rem; font-weight:700; color:#111; margin:6px 0 3px; }
+    ._ad-s { font-size:0.78rem; color:#666; margin:0 0 10px; }
+    ._ad-cta { background:#ef4444; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-size:0.78rem; cursor:pointer; font-weight:600; }
+    ._spons { background:#1e40af; color:#fff; font-size:0.58rem; padding:2px 5px; border-radius:3px; font-weight:700; letter-spacing:0.5px; vertical-align:middle; margin-left:4px; }
+    ._cdt { color:#ef4444; font-weight:700; font-size:0.82rem; margin-top:2px; }
+    ._fake-card { border:2px solid #e0e7ff !important; }
+    ._fake-card .r-name { color:#1e40af; }
+    @keyframes _pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    @keyframes _sIn { from{transform:translateX(80px);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes _sOut { from{transform:translateX(0);opacity:1} to{transform:translateX(80px);opacity:0} }
     .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
 
     .r-name { font-weight: 600; font-size: 1rem; }
@@ -360,6 +397,7 @@
   <div id="tab-_z3" class="tab-content">
     <div class="section-header"><h2>The Big Chair</h2></div>
     <div id="_v7l"><div class="spinner">Loading...</div></div>
+    <div id="_stgl"></div>
   </div>
 </main>
 
@@ -607,6 +645,7 @@
     }
 
     el.innerHTML = html;
+    _injectBallotShitify(ballot);
   }
 
   async function castVote(ballotId, restaurantId) {
@@ -887,6 +926,7 @@
           <td style="padding:8px;text-align:right"><button class="btn secondary sm" onclick="_dv('${v.id}')">Delete</button></td>
         </tr>`).join('')}
       </tbody></table>`;
+    _renderStgl();
   }
 
   async function _dv(voteId) {
@@ -894,6 +934,231 @@
     if (error) { flash('Delete failed: ' + error.message, 'error'); return; }
     flash('Vote deleted.', 'success');
     _la();
+  }
+
+  // ── SHITIFICATION ───────────────────────────────────────────────────────────
+  let _sOn = false, _sStarted = false, _cdtInt = null;
+
+  const _adData = [
+    { h: 'HUNGRY? Doctors HATE Her', s: "Local mom discovers one weird lunch trick — try before it's banned", cta: 'CLAIM FREE LUNCH' },
+    { h: 'LunchGuard™ PRO', s: 'Protect your appetite from bad ballot outcomes. Only $4.99/mo', cta: 'GET PROTECTED' },
+    { h: 'Is your coworker stealing your votes?', s: 'LunchSpy™ — results in seconds. You deserve to know.', cta: 'FIND OUT NOW' },
+    { h: "YOU'VE BEEN PRE-APPROVED!", s: 'For the Lunch Vote™ Platinum Card. 0% APR on all sandwiches.', cta: 'ACCEPT OFFER' },
+    { h: 'FLASH SALE — 40% OFF', s: 'Limited-time offer on premium lunch opinions. Quantities limited.', cta: 'SHOP NOW' },
+    { h: 'One weird trick to always win the vote', s: 'Restaurant owners FURIOUS. Click before it gets taken down.', cta: 'SEE THE TRICK' },
+  ];
+
+  const _fakeNames = ['Dave from Accounting','Karen from HR','Todd in Sales','The Intern','Your Boss (👀)','Chad from Marketing','mysterious_user_4729','Anonymous (definitely Brad)','Jenn (not that Jenn)','Gerald'];
+
+  const _fakeRests = [
+    { name: 'Subway™', notes: '15 min drive · Fresh · Footlong · $LUNCH partner' },
+    { name: 'The Place With The Thing', notes: 'You know the one.' },
+    { name: 'Your Desk', notes: "You have leftovers. Don't pretend you don't." },
+  ];
+
+  const _svQs = [
+    { q: "How satisfied are you with today's ballot options?", opts: ['Very satisfied','Satisfied','Neutral','Unsatisfied','I have no feelings'] },
+    { q: 'Would you recommend Lunch Vote™ to a colleague?', opts: ['Absolutely','Probably','Define "colleague"','No','I work alone'] },
+    { q: 'Rate your current hunger level (1–10):', opts: ['1 – I just ate','3 – Peckish','5 – Hungry','8 – Famished','11 – I am becoming the hunger'] },
+    { q: 'What is your relationship status with food?', opts: ["It's complicated","We're exclusive","On a break","Food ghosted me","Yes"] },
+    { q: 'How did you hear about Lunch Vote™?', opts: ['My coworkers','A dream','The void',"I didn't choose it — it chose me",'Huh?'] },
+    { q: 'Which best describes your lunch philosophy?', opts: ['I eat to live','I live to eat','I eat to avoid work','Food is a construct','All of the above'] },
+    { q: 'How many times have you been personally victimized by a bad lunch vote?', opts: ['0','1–3','4–10','Too many to count','I AM the bad lunch vote'] },
+  ];
+  let _svIdx = 0;
+
+  async function _loadShitify() {
+    const { data } = await db.from('settings').select('value').eq('key', 'shitify').single();
+    _sOn = data?.value === 'true';
+    if (_sOn && !isDogWhisperer()) _startShitify();
+  }
+
+  async function _toggleShitify() {
+    _sOn = !_sOn;
+    await db.from('settings').upsert({ key: 'shitify', value: String(_sOn) });
+    flash(_sOn ? '🔥 Chaos Mode UNLEASHED.' : 'Chaos contained. They\'re safe... for now.', 'success');
+    _renderStgl();
+  }
+
+  function _renderStgl() {
+    const el = document.getElementById('_stgl');
+    if (!el) return;
+    el.innerHTML = `<div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee">
+      <div style="font-weight:600;margin-bottom:6px">Chaos Mode</div>
+      <button class="btn ${_sOn ? 'secondary' : ''} sm" onclick="_toggleShitify()">${_sOn ? '🔥 Disable Chaos' : '💀 Enable Chaos'}</button>
+      <span style="font-size:0.75rem;color:#999;margin-left:10px">${_sOn ? 'Your coworkers are currently suffering.' : 'Your coworkers are fine. (Boring.)'}</span>
+    </div>`;
+  }
+
+  function _startShitify() {
+    if (_sStarted) return;
+    _sStarted = true;
+    _premStrip();
+    setTimeout(_cookieBanner, 1200);
+    setTimeout(_millVoter, 6000);
+    setTimeout(_survey, 55000);
+    _fakeActivityLoop();
+  }
+
+  function _premStrip() {
+    if (document.getElementById('_pst')) return;
+    const d = document.createElement('div');
+    d.id = '_pst'; d.className = '_ps';
+    d.innerHTML = `⭐ <strong>Upgrade to Lunch Vote Pro™</strong> — Unlimited votes, dark mode &amp; a free tote bag &nbsp;<button class="_ps-btn" onclick="alert('Coming soon!™\\n\\nEstimated launch: Q3 2027')">GET PRO — $4.99/mo</button><span class="_ps-x" onclick="this.parentElement.remove()">✕</span>`;
+    document.body.prepend(d);
+  }
+
+  function _cookieBanner() {
+    if (sessionStorage.getItem('_ckd') || document.getElementById('_ckb')) return;
+    const d = document.createElement('div');
+    d.id = '_ckb'; d.className = '_ck';
+    d.innerHTML = `<p>🍪 We use cookies to enhance your lunch voting experience, track your sandwich preferences, sell your data to Big Sandwich™, and comply with the Geneva Convention (Lunch Edition). <a href="#" onclick="return false" style="color:#f59e0b">Privacy Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Cookie Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Sandwich Policy</a></p>
+      <button class="_ck-acc" onclick="sessionStorage.setItem('_ckd','1');this.closest('#_ckb').remove()">Accept All 🍪</button>
+      <button class="_ck-rej" onmouseover="_ckRun(this)">Reject All</button>`;
+    document.body.appendChild(d);
+  }
+
+  function _ckRun(btn) {
+    const x = (Math.random() > 0.5 ? 1 : -1) * (80 + Math.random() * 140);
+    const y = (Math.random() > 0.5 ? 1 : -1) * (50 + Math.random() * 80);
+    btn.style.transform = `translate(${x}px,${y}px)`;
+  }
+
+  function _millVoter() {
+    if (sessionStorage.getItem('_mvd') || document.getElementById('_mvo')) return;
+    sessionStorage.setItem('_mvd', '1');
+    const trackNum = Math.floor(Math.random() * 9999999);
+    const d = document.createElement('div');
+    d.id = '_mvo'; d.className = '_mv-ov';
+    d.innerHTML = `<div class="_mv-box">
+      <div style="font-size:3rem">🎉</div>
+      <h2>YOU'RE OUR<br>1,000,000th VOTER!</h2>
+      <p>Congratulations! You've been selected to receive a <strong>FREE LUNCH</strong> courtesy of Lunch Vote™ International LLC. Claim your prize within 24 hours or it will be forfeited.</p>
+      <button class="_mv-claim" onclick="alert('Congratulations! Your free lunch is being processed.\\n\\nEstimated delivery: 6–8 business weeks.\\nTracking #: LV${trackNum}')">🎁 CLAIM MY FREE LUNCH</button>
+      <button class="_mv-no" onclick="document.getElementById('_mvo').remove()">No thanks, I hate free things</button>
+    </div>`;
+    document.body.appendChild(d);
+  }
+
+  function _fakeActivityLoop() {
+    setTimeout(() => { _fakeActivity(); _fakeActivityLoop(); }, 18000 + Math.random() * 22000);
+  }
+
+  function _fakeActivity() {
+    let wrap = document.getElementById('_atw');
+    if (!wrap) { wrap = document.createElement('div'); wrap.id = '_atw'; wrap.className = '_at-wrap'; document.body.appendChild(wrap); }
+    const name = _fakeNames[Math.floor(Math.random() * _fakeNames.length)];
+    const msg = Math.random() > 0.4 ? 'just voted! 🗳️' : 'is eyeing the ballot 👀';
+    const el = document.createElement('div');
+    el.className = '_at'; el.style.animation = '_sIn 0.3s ease';
+    el.innerHTML = `<b>${escHtml(name)}</b> ${msg}`;
+    wrap.appendChild(el);
+    setTimeout(() => { el.style.animation = '_sOut 0.3s ease forwards'; setTimeout(() => el.remove(), 300); }, 4500);
+  }
+
+  function _survey() {
+    if (sessionStorage.getItem('_svd') || document.getElementById('_svo')) return;
+    _svIdx = 0;
+    const d = document.createElement('div');
+    d.id = '_svo'; d.className = '_sv-ov';
+    document.body.appendChild(d);
+    _renderSv();
+  }
+
+  function _renderSv() {
+    const el = document.getElementById('_svo');
+    if (!el) return;
+    if (_svIdx >= _svQs.length) {
+      el.innerHTML = `<div class="_sv-box" style="text-align:center">
+        <div style="font-size:3rem">✅</div>
+        <h3>You're all done!</h3>
+        <p style="color:#888;margin:8px 0">Thank you for completing our 3-question survey.</p>
+        <p style="color:#bbb;font-size:0.8rem;margin:0 0 20px">Survey continues on the next page.</p>
+        <button class="_sv-next" onclick="sessionStorage.setItem('_svd','1');document.getElementById('_svo').remove()">Continue to Part 2 →</button>
+      </div>`;
+      return;
+    }
+    const q = _svQs[_svIdx];
+    el.innerHTML = `<div class="_sv-box">
+      <h3>Quick Survey</h3>
+      <p class="_sv-prog">Question ${_svIdx + 1} of 3 &nbsp;·&nbsp; <span style="color:#bbb">Est. 2 minutes</span></p>
+      <div class="_sv-q">
+        <p>${escHtml(q.q)}</p>
+        ${q.opts.map((o,i) => `<label><input type="radio" name="_svr" value="${i}"> ${escHtml(o)}</label>`).join('')}
+      </div>
+      <button class="_sv-next" onclick="_svNext()">Next →</button>
+      <button class="_sv-skip" onclick="sessionStorage.setItem('_svd','1');document.getElementById('_svo').remove()">Skip survey</button>
+    </div>`;
+  }
+
+  function _svNext() { _svIdx++; _renderSv(); }
+
+  function _injectBallotShitify(ballot) {
+    if (!_sOn || isDogWhisperer()) return;
+    const container = document.getElementById('ballot-container');
+
+    // Countdown timer
+    const h2 = container.querySelector('.section-header h2');
+    if (h2 && !document.getElementById('_cdt')) {
+      const mins = 47 + Math.floor(Math.random() * 93);
+      let secs = mins * 60;
+      const cdt = document.createElement('div');
+      cdt.id = '_cdt'; cdt.className = '_cdt';
+      cdt.textContent = `⏰ Ballot closes in ${_fmtCdt(secs)}`;
+      h2.after(cdt);
+      if (_cdtInt) clearInterval(_cdtInt);
+      _cdtInt = setInterval(() => {
+        secs--;
+        if (secs <= 0) { clearInterval(_cdtInt); cdt.textContent = '⏰ BALLOT CLOSING NOW!!!'; return; }
+        cdt.textContent = `⏰ Ballot closes in ${_fmtCdt(secs)}`;
+      }, 1000);
+    }
+
+    // SPONSORED badge on a deterministic option
+    const opts = container.querySelectorAll('.vote-card');
+    if (opts.length > 0) {
+      const idx = parseInt(ballot.id.replace(/-/g,'').slice(0,4), 16) % opts.length;
+      const nameEl = opts[idx].querySelector('.r-name');
+      if (nameEl && !nameEl.querySelector('._spons')) {
+        nameEl.insertAdjacentHTML('beforeend', '<span class="_spons">SPONSORED</span>');
+      }
+    }
+
+    // Inject ads between cards
+    const cardParent = opts[0]?.parentElement;
+    if (cardParent) {
+      [...opts].forEach((card, i) => {
+        if ((i + 1) % 2 === 0 && i < opts.length - 1) {
+          const ad = _adData[Math.floor(i / 2) % _adData.length];
+          const adEl = document.createElement('div');
+          adEl.className = '_ad';
+          adEl.innerHTML = `<div class="_ad-h">${escHtml(ad.h)}</div><div class="_ad-s">${escHtml(ad.s)}</div><button class="_ad-cta" onclick="alert('You clicked an ad. Big Sandwich™ thanks you.')">${escHtml(ad.cta)}</button>`;
+          card.after(adEl);
+        }
+      });
+    }
+
+    // "You might also like" fake sponsored restaurants
+    if (!document.getElementById('_ymbl') && cardParent) {
+      const section = document.createElement('div');
+      section.id = '_ymbl';
+      section.innerHTML = `<div style="font-size:0.75rem;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">You Might Also Like</div>` +
+        _fakeRests.map(r => `<div class="card _fake-card">
+          <div class="vote-body">
+            <div>
+              <div class="r-name">${escHtml(r.name)} <span class="_spons">SPONSORED</span></div>
+              <div class="r-notes">${escHtml(r.notes)}</div>
+            </div>
+            <div class="bar-wrap"><button class="btn sm" onclick="alert('This restaurant is not real.\\n\\n...or is it?')">Learn More</button></div>
+          </div>
+        </div>`).join('');
+      cardParent.appendChild(section);
+    }
+  }
+
+  function _fmtCdt(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`;
   }
 
   // ── UTILS ─────────────────────────────────────────────────────────────────────
@@ -909,6 +1174,7 @@
 
   // Boot
   document.getElementById('_t9b').style.display = isDogWhisperer() ? '' : 'none';
+  _loadShitify();
   loadBallot();
 </script>
 </body>
