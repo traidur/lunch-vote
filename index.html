@@ -256,6 +256,11 @@
     ._mv-no { display:block; margin-top:10px; color:#ccc; font-size:0.68rem; cursor:pointer; background:none; border:none; }
     ._at-wrap { position:fixed; bottom:24px; right:24px; z-index:9998; display:flex; flex-direction:column-reverse; gap:8px; pointer-events:none; max-width:280px; }
     ._at { background:#fff; border-radius:8px; padding:10px 14px; font-size:0.8rem; box-shadow:0 4px 16px rgba(0,0,0,0.15); border-left:4px solid #22c55e; }
+    ._tnc-ov { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10001; display:flex; align-items:center; justify-content:center; }
+    ._tnc-box { background:#fff; border-radius:8px; padding:24px; max-width:520px; width:95%; max-height:80vh; display:flex; flex-direction:column; }
+    ._tnc-box h3 { margin:0 0 4px; font-size:1rem; }
+    ._tnc-scroll { overflow-y:scroll; flex:1; font-size:0.72rem; color:#444; line-height:1.6; border:1px solid #eee; padding:12px; margin:10px 0; background:#fafafa; }
+    ._tnc-scroll h4 { font-size:0.75rem; margin:10px 0 4px; color:#111; }
     ._sv-ov { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10000; display:flex; align-items:center; justify-content:center; }
     ._sv-box { background:#fff; border-radius:12px; padding:28px; max-width:400px; width:90%; }
     ._sv-box h3 { margin:0 0 2px; }
@@ -452,6 +457,10 @@
     <div id="_stgl"></div>
   </div>
 </main>
+
+<footer style="text-align:center;padding:16px;font-size:0.7rem;color:#aaa;border-top:1px solid #ddd;margin-top:24px">
+  © 1997–2026 Lunch Vote™ International LLC · All Rights Reserved · <a href="#" onclick="_showTnc();return false" style="color:#aaa">Terms &amp; Conditions</a> · <a href="#" onclick="return false" style="color:#aaa">Privacy Policy</a> · <a href="#" onclick="return false" style="color:#aaa">Sandwich Policy</a> · <a href="#" onclick="alert('Site Map\\n\\n- Home\\n- Home (mirror)\\n- Home (backup mirror)\\n- Under Construction\\n- Guestbook\\n- Cool Links\\n- My Hamster Webpage (coming soon)');return false" style="color:#aaa">Site Map</a>
+</footer>
 
 <div id="winner-modal" class="winner-modal" onclick="this.classList.remove('active')">
   <div class="winner-modal-inner" onclick="event.stopPropagation()">
@@ -1090,6 +1099,7 @@
     document.getElementById('_hba').style.display = '';
     _geoChaos();
     _premStrip();
+    document.addEventListener('mousedown', _clickBlip);
     setTimeout(_cookieBanner, 1200);
     setTimeout(_millVoter, 6000);
     setTimeout(_survey, 55000);
@@ -1108,8 +1118,8 @@
     if (sessionStorage.getItem('_ckd') || document.getElementById('_ckb')) return;
     const d = document.createElement('div');
     d.id = '_ckb'; d.className = '_ck';
-    d.innerHTML = `<p>🍪 We use cookies to enhance your lunch voting experience, track your sandwich preferences, sell your data to Big Sandwich™, and comply with the Geneva Convention (Lunch Edition). <a href="#" onclick="return false" style="color:#f59e0b">Privacy Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Cookie Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Sandwich Policy</a></p>
-      <button class="_ck-acc" onclick="sessionStorage.setItem('_ckd','1');this.closest('#_ckb').remove()">Accept All 🍪</button>
+    d.innerHTML = `<p>🍪 We use cookies to enhance your lunch voting experience, track your sandwich preferences, sell your data to Big Sandwich™, and comply with the Geneva Convention (Lunch Edition). <a href="#" onclick="return false" style="color:#f59e0b">Privacy Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Cookie Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Sandwich Policy</a> · <a href="#" onclick="_showTnc();return false" style="color:#f59e0b">Terms &amp; Conditions</a></p>
+      <button class="_ck-acc" onclick="sessionStorage.setItem('_ckd','1');this.closest('#_ckb').remove();_midiPlay()">Accept All 🍪</button>
       <button class="_ck-rej" onmouseover="_ckRun(this)">Reject All</button>`;
     document.body.appendChild(d);
   }
@@ -1257,6 +1267,148 @@
     return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`;
   }
 
+  // ── MIDI ENGINE ──────────────────────────────────────────────────────────────
+  let _ac = null, _mPlaying = false, _mTimeout = null, _mMaster = null;
+
+  // Sandstorm (Darude) - sawtooth chiptune approximation, 136 BPM
+  // [freq_hz, duration_in_16th_notes]
+  const _S16 = 60 / 136 / 4; // 16th note duration at 136 BPM
+
+  // Sandstorm (Darude) - B minor pentatonic, 136 BPM
+  // [freq_hz, duration_in_16th_notes]
+  const _SONG = [
+    // Staccato verse riff x2: B B B B A B A B / E E E E D E D E
+    [493.88,1],[493.88,1],[493.88,1],[493.88,1],[440.00,1],[493.88,1],[440.00,1],[493.88,1],
+    [329.63,1],[329.63,1],[329.63,1],[329.63,1],[293.66,1],[329.63,1],[293.66,1],[329.63,1],
+    [493.88,1],[493.88,1],[493.88,1],[493.88,1],[440.00,1],[493.88,1],[440.00,1],[493.88,1],
+    [329.63,1],[329.63,1],[329.63,1],[329.63,1],[293.66,1],[329.63,1],[293.66,1],[329.63,1],
+    // Fill up: G G A B / A B rest
+    [392.00,2],[392.00,2],[440.00,2],[493.88,2],[440.00,2],[493.88,4],[0,6],
+    // Hook melody: B B A B / G A B rest
+    [493.88,2],[493.88,2],[440.00,2],[493.88,2],[392.00,2],[440.00,2],[493.88,4],[0,4],
+    // B A G A / B(long) rest
+    [493.88,2],[440.00,2],[392.00,2],[440.00,2],[493.88,6],[0,6],
+    // Higher: E5 D5 B4 A4 / G4 A4 B4(long) rest
+    [659.25,2],[587.33,2],[493.88,2],[440.00,2],[392.00,2],[440.00,2],[493.88,8],[0,4],
+    // Descend: B4 A4 G4 F#4 E4(long) rest
+    [493.88,2],[440.00,2],[392.00,2],[369.99,2],[329.63,8],[0,8],
+  ];
+
+  function _initAc() {
+    if (_ac) return;
+    _ac = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  function _midiPlay() {
+    _initAc();
+    if (_ac.state === 'suspended') _ac.resume();
+    if (_mPlaying) return;
+    _mPlaying = true;
+    _mMaster = _ac.createGain();
+    _mMaster.gain.value = 0.22;
+    _mMaster.connect(_ac.destination);
+    _scheduleLoop(_ac.currentTime);
+    const s = document.getElementById('_midi-status');
+    if (s) { s.textContent = '▶ NOW PLAYING'; s.style.color = '#00ff00'; }
+  }
+
+  function _midiStop() {
+    _mPlaying = false;
+    if (_mTimeout) clearTimeout(_mTimeout);
+    if (_mMaster) { _mMaster.gain.linearRampToValueAtTime(0, _ac.currentTime + 0.05); _mMaster = null; }
+    const s = document.getElementById('_midi-status');
+    if (s) { s.textContent = '⏹ Stopped'; s.style.color = '#888'; }
+  }
+
+  function _clickBlip() {
+    _initAc();
+    if (_ac.state === 'suspended') _ac.resume().then(_clickBlip);
+    if (_ac.state !== 'running') return;
+    const freqs = [523, 659, 784, 880, 1047];
+    const freq = freqs[Math.floor(Math.random() * freqs.length)];
+    const osc = _ac.createOscillator();
+    const env = _ac.createGain();
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    env.gain.setValueAtTime(0.08, _ac.currentTime);
+    env.gain.exponentialRampToValueAtTime(0.001, _ac.currentTime + 0.08);
+    osc.connect(env);
+    env.connect(_ac.destination);
+    osc.start(_ac.currentTime);
+    osc.stop(_ac.currentTime + 0.08);
+  }
+
+  function _scheduleLoop(startTime) {
+    if (!_mPlaying || !_mMaster) return;
+    let t = startTime;
+    _SONG.forEach(([freq, dur]) => {
+      const d = dur * _S16;
+      if (freq > 0) {
+        [8, -8].forEach(detune => {
+          const osc = _ac.createOscillator();
+          const filter = _ac.createBiquadFilter();
+          const env = _ac.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.value = freq;
+          osc.detune.value = detune;
+          filter.type = 'lowpass';
+          filter.frequency.value = 2400;
+          filter.Q.value = 2;
+          env.gain.setValueAtTime(0, t);
+          env.gain.linearRampToValueAtTime(0.18, t + 0.006);
+          env.gain.exponentialRampToValueAtTime(0.001, t + d * 0.78);
+          osc.connect(filter);
+          filter.connect(env);
+          env.connect(_mMaster);
+          osc.start(t);
+          osc.stop(t + d);
+        });
+      }
+      t += d;
+    });
+    const loopMs = (t - startTime) * 1000;
+    _mTimeout = setTimeout(() => _scheduleLoop(t), loopMs - 150);
+  }
+
+  function _showTnc() {
+    if (document.getElementById('_tnco')) return;
+    const d = document.createElement('div');
+    d.id = '_tnco'; d.className = '_tnc-ov';
+    d.innerHTML = `<div class="_tnc-box">
+      <h3>📜 Terms &amp; Conditions of Lunch Vote™</h3>
+      <div style="font-size:0.68rem;color:#999">Last updated: January 1, 1997. Effective immediately and retroactively.</div>
+      <div class="_tnc-scroll">
+        <h4>1. Acceptance of Terms</h4>
+        <p>By accessing, viewing, clicking, hovering, breathing near, or thinking about Lunch Vote™ (hereinafter "the Platform", "the Service", "The Thing", or "It"), you agree to be bound by these Terms and Conditions in perpetuity, including all past, present, and future versions, including versions that have not yet been written, conceived, or imagined.</p>
+        <h4>2. Voting Rights and Responsibilities</h4>
+        <p>Each user is entitled to one (1) vote per ballot, subject to availability, mood, and the whims of the Platform at any given moment. Lunch Vote™ reserves the right to void any vote for any reason, including but not limited to: bad vibes, Mercury being in retrograde, or the restaurant having a weird name.</p>
+        <h4>3. Data Collection</h4>
+        <p>By using the Platform you consent to the collection of your name, vote history, lunch preferences, sandwich opinions, dietary restrictions, general vibe, and any information you have ever typed into any device ever. This data may be shared with Big Sandwich™, Little Sandwich™, Medium Sandwich LLC, and any sandwich-adjacent third parties operating in jurisdictions where sandwiches are legally recognized.</p>
+        <h4>4. Intellectual Property</h4>
+        <p>All content on Lunch Vote™, including but not limited to the ballot, the fonts, the concept of voting, the concept of lunch, and the number four (4), is the exclusive intellectual property of Lunch Vote™ International Holdings Corp. Unauthorized use of the number four (4) will be prosecuted to the fullest extent of the law.</p>
+        <h4>5. Limitation of Liability</h4>
+        <p>Lunch Vote™ shall not be held liable for: bad lunch choices, good lunch choices, lunch indecision, post-lunch regret, pre-lunch anxiety, lunch that is merely adequate, or the passage of time. Lunch Vote™ is also not liable for any outcomes of the French Revolution.</p>
+        <h4>6. Dispute Resolution</h4>
+        <p>All disputes shall be resolved via a binding lunch vote. The outcome of said lunch vote shall not be disputed. Any dispute of the dispute resolution process shall itself be resolved via a lunch vote, creating a legally binding recursive loop that both parties agree to find funny.</p>
+        <h4>7. Modifications to Terms</h4>
+        <p>Lunch Vote™ may modify these Terms at any time without notice, retroactively, proactively, or atively. Continued use of your own memory constitutes acceptance of all modifications.</p>
+        <h4>8. Governing Law</h4>
+        <p>These Terms shall be governed by the laws of the Sovereign Lunch Nation of GeoCities (est. 1994, dissolved 2009, spiritually ongoing), without regard to its conflict of law provisions, principally because there are no conflict of law provisions because we made this up.</p>
+        <h4>9. Severability</h4>
+        <p>If any provision of these Terms is found to be unenforceable, that provision shall be modified to the minimum extent necessary to make it enforceable, then immediately made unenforceable again for comedic effect.</p>
+        <h4>10. Entire Agreement</h4>
+        <p>These Terms constitute the entire agreement between you and Lunch Vote™ regarding lunch. All prior agreements regarding lunch are hereby superseded, including verbal agreements, pinky promises, and that one time someone said "we should go to that place again."</p>
+        <h4>11. Reading These Terms in Full</h4>
+        <p><strong>IMPORTANT NOTICE:</strong> Reading these Terms and Conditions in their entirety is strictly prohibited under Section 11(a) of the Lunch Vote™ User Agreement (these Terms and Conditions). Any user found to have read all of the foregoing Terms shall be deemed in material breach of this Agreement and may be subject to a strongly worded email. By reading this sentence, you acknowledge that you have read too much and agree to stop immediately. Lunch Vote™ thanks you for your non-compliance.</p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn secondary sm" onclick="document.getElementById('_tnco').remove()">I Have Not Read This</button>
+        <button class="btn sm" onclick="alert('You just violated Section 11. Expect a strongly worded email.');document.getElementById('_tnco').remove()">I Agree (I Did Not Read This)</button>
+      </div>
+    </div>`;
+    document.body.appendChild(d);
+  }
+
   // ── GEO-CHAOS ────────────────────────────────────────────────────────────────
   function _geoChaos() {
     _geoStripe();
@@ -1402,9 +1554,9 @@
         <div style="width:4px;background:#0f0;animation:_bounce 0.35s ease infinite;height:90%"></div>
         <div style="width:4px;background:#0f0;animation:_bounce 0.55s ease infinite;height:45%"></div>
       </div>
-      <span class="_gutter-midi-btn" onclick="alert('Your Sound Blaster 16 is not responding.\\n\\nPlease check IRQ 5.')">⏵ Play</span>
-      <span class="_gutter-midi-btn" onclick="alert('Paused. The silence is deafening.')">⏸ Stop</span>
-      <div style="color:#888;font-size:0.48rem;margin-top:4px">Requires Winamp 2.0+</div>
+      <span id="_midi-play" class="_gutter-midi-btn" onclick="_midiPlay()">⏵ Play</span>
+      <span id="_midi-stop" class="_gutter-midi-btn" onclick="_midiStop()">⏸ Stop</span>
+      <div style="color:#888;font-size:0.48rem;margin-top:4px" id="_midi-status">Click Play to start</div>
     </div>`;
 
     const browserBadge = `<div style="text-align:center;margin:8px 0">
