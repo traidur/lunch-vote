@@ -294,6 +294,38 @@
     @keyframes _newblink { 0%,49%{background:#ff0000;color:#ffff00} 50%,100%{background:#ffff00;color:#ff0000} }
     @keyframes _blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
     @keyframes _rainbow { 0%{color:#ff0000} 16%{color:#ff8800} 33%{color:#ffff00} 50%{color:#00ff00} 66%{color:#0088ff} 83%{color:#8800ff} 100%{color:#ff0000} }
+
+    /* ── SIDE GUTTERS ──────────────────────────────────────────────────────── */
+    ._gutter { position:fixed; top:0; bottom:0; width:180px; z-index:9988; overflow-y:auto; overflow-x:hidden; font-family:'Courier New',monospace; font-size:0.68rem; background:linear-gradient(180deg,#000080,#000040,#000060,#000080); color:#00ff00; padding:8px 6px; scrollbar-width:none; }
+    ._gutter::-webkit-scrollbar { display:none; }
+    ._gutter-l { left:0; border-right:4px ridge #888; }
+    ._gutter-r { right:0; border-left:4px ridge #888; }
+    ._gutter-hd { color:#ffff00; font-weight:900; font-size:0.72rem; text-align:center; letter-spacing:1px; margin:10px 0 4px; text-shadow:1px 1px 0 #000; border-top:2px groove #888; border-bottom:2px groove #888; padding:4px 0; background:rgba(255,255,0,0.08); }
+    ._gutter-hr { border:none; border-top:2px ridge #888; margin:8px 0; }
+    ._gutter a { color:#00ffff; text-decoration:underline; }
+    ._gutter a:hover { color:#ff00ff; }
+    ._gutter-blink { animation:_blink 1s step-end infinite; }
+    ._gutter-rainbow { animation:_rainbow 2s linear infinite; font-weight:900; }
+    ._gutter-award { display:inline-block; border:3px ridge #c0c0c0; background:#000; padding:6px; margin:4px auto; text-align:center; box-shadow:0 0 8px #ffff0044; }
+    ._gutter-btn { display:block; width:100%; background:linear-gradient(180deg,#c0c0c0,#808080); color:#000; border:2px outset #c0c0c0; padding:3px 6px; font-family:'Courier New',monospace; font-size:0.62rem; font-weight:700; cursor:pointer; text-align:center; margin:3px 0; }
+    ._gutter-btn:hover { background:linear-gradient(180deg,#e0e0e0,#a0a0a0); }
+    ._gutter-btn:active { border-style:inset; }
+    ._gutter-midi { background:#111; border:2px inset #444; padding:6px; margin:6px 0; text-align:center; }
+    ._gutter-midi-btn { display:inline-block; background:#333; color:#0f0; border:1px solid #0f0; padding:2px 6px; font-family:'Courier New',monospace; font-size:0.6rem; cursor:pointer; margin:2px; }
+    ._gutter-midi-btn:hover { background:#0f0; color:#000; }
+    ._gutter-ring { background:rgba(255,255,255,0.05); border:2px ridge #888; padding:6px; margin:6px 0; text-align:center; }
+    ._gutter-ring img { image-rendering:pixelated; }
+    ._gutter-skull { display:inline-block; animation:_spin 3s linear infinite; }
+    ._gutter-fire { display:inline-block; animation:_wobble 0.3s ease-in-out infinite; }
+    ._gutter-scroll { animation:_gscroll 8s linear infinite; display:block; white-space:nowrap; }
+    @keyframes _gscroll { 0%{transform:translateX(100%)} 100%{transform:translateX(-200%)} }
+    ._gutter-gb { background:#003300; border:2px ridge #00ff00; padding:6px; margin:6px 0; text-align:center; }
+    ._gutter-clock { background:#000; border:2px inset #888; padding:6px; margin:6px 0; text-align:center; color:#ff0000; font-size:0.9rem; font-weight:900; letter-spacing:2px; font-family:'Courier New',monospace; text-shadow:0 0 6px #ff000088; }
+    ._gutter-tip { background:#330000; border:1px solid #ff0000; padding:5px; margin:6px 0; color:#ff6666; font-size:0.58rem; text-align:center; }
+    ._gutter-webcam { background:#111; border:2px groove #666; padding:4px; margin:6px 0; text-align:center; font-size:0.55rem; color:#999; }
+    ._gutter-webcam-img { width:100%; height:60px; background:repeating-linear-gradient(0deg,#111 0,#111 2px,#222 2px,#222 4px); display:flex; align-items:center; justify-content:center; color:#444; font-size:0.7rem; }
+    @media (max-width: 1200px) { ._gutter { display:none !important; } }
+
     .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
 
     .r-name { font-weight: 600; font-size: 1rem; }
@@ -1232,6 +1264,7 @@
     _geoGifoids();
     _geoCounter();
     _geoNewBadges();
+    _geoGutters();
   }
 
   function _geoStripe() {
@@ -1292,6 +1325,205 @@
         btn.insertAdjacentHTML('beforeend', `<span class="_new-badge">${i === 0 ? 'HOT' : 'NEW!'}</span>`);
       }
     });
+  }
+
+  // ── SIDE GUTTERS ──────────────────────────────────────────────────────────────
+  let _gutterClockInt = null;
+
+  function _geoGutters() {
+    if (document.getElementById('_gutter-l')) return;
+    _buildLeftGutter();
+    _buildRightGutter();
+    _startGutterClock();
+  }
+
+  function _buildLeftGutter() {
+    const g = document.createElement('div');
+    g.id = '_gutter-l'; g.className = '_gutter _gutter-l';
+
+    const webring = `<div class="_gutter-ring">
+      <div style="color:#ffff00;font-weight:900;font-size:0.65rem;margin-bottom:4px">🔗 THE LUNCH WEBRING 🔗</div>
+      <div style="margin:4px 0">
+        <a href="#" onclick="return false">⬅ Previous</a> |
+        <a href="#" onclick="return false">Random</a> |
+        <a href="#" onclick="return false">Next ➡</a>
+      </div>
+      <div style="font-size:0.5rem;color:#888;margin-top:4px">Member of 2,847 sites</div>
+    </div>`;
+
+    const awards = `<div class="_gutter-hd">🏆 SITE AWARDS 🏆</div>
+    <div class="_gutter-award">
+      <div style="font-size:1.4rem">🏆</div>
+      <div style="color:#ffff00;font-size:0.55rem;font-weight:900">BEST OF THE WEB</div>
+      <div style="color:#ff8800;font-size:0.5rem">★★★★★</div>
+      <div style="color:#888;font-size:0.45rem">AWARDED 1997</div>
+    </div>
+    <div class="_gutter-award">
+      <div style="font-size:1.4rem">🥇</div>
+      <div style="color:#ffff00;font-size:0.55rem;font-weight:900">TOP 5% OF ALL</div>
+      <div style="color:#ffff00;font-size:0.55rem;font-weight:900">WEBSITES</div>
+      <div style="color:#888;font-size:0.45rem">GEOCITIES PICK</div>
+    </div>
+    <div class="_gutter-award">
+      <div style="font-size:1.2rem"><span class="_gutter-skull">💀</span></div>
+      <div style="color:#ff0000;font-size:0.55rem;font-weight:900">SKULL OF</div>
+      <div style="color:#ff0000;font-size:0.55rem;font-weight:900">APPROVAL</div>
+      <div style="color:#666;font-size:0.45rem">GIVEN BY xX_D4RK_Xx</div>
+    </div>`;
+
+    const links = `<div class="_gutter-hd">🔥 COOL LINKS 🔥</div>
+    <div style="padding:2px 0"><span class="_gutter-fire">🔥</span> <a href="#" onclick="alert('Link rotted in 2003');return false">Dave's Lunch Page</a></div>
+    <div style="padding:2px 0">💀 <a href="#" onclick="alert('ERROR 404: This Geocities page has been permanently archived');return false">SkullZ Eat Zone</a></div>
+    <div style="padding:2px 0">⚡ <a href="#" onclick="alert('The webmaster of this site was last seen in 2001');return false">XTREME EATS!!!</a></div>
+    <div style="padding:2px 0">🌐 <a href="#" onclick="alert('Connecting to AOL... please wait...');return false">Food Ring HQ</a></div>
+    <div style="padding:2px 0"><span class="_gutter-blink">🆕</span> <a href="#" onclick="alert('This link has been under construction since 1998');return false">NEW! Sandwich.com</a></div>
+    <div style="padding:2px 0">🎵 <a href="#" onclick="alert('MIDI file not found. Your Sound Blaster 16 weeps.');return false">MIDI Archive</a></div>
+    <div style="padding:2px 0">📧 <a href="#" onclick="alert('mailto:webmaster@lunchvote.geocities.com\\n\\nJust kidding, this email bounced in 1999');return false">Email Webmaster</a></div>`;
+
+    const guestbook = `<div class="_gutter-gb">
+      <div style="color:#00ff00;font-weight:900;font-size:0.65rem">📖 SIGN MY</div>
+      <div style="color:#00ff00;font-weight:900;font-size:0.65rem">GUESTBOOK 📖</div>
+      <button class="_gutter-btn" onclick="alert('GUESTBOOK ENTRY #48,291\\n\\nYour entry has been submitted for moderator review.\\n\\nEstimated approval: 6-8 business years.\\n\\nThank you for visiting my homepage!\\n\\n- The Webmaster')">SIGN IT!</button>
+      <div style="font-size:0.5rem;color:#009900;margin-top:3px">48,290 entries!</div>
+      <button class="_gutter-btn" onclick="alert('Guestbook entries:\\n\\n#1 (01/14/1997): cool page dude -SurfR_69\\n#2 (03/22/1997): nice site check out mine -xXDarkAngelXx\\n#3 (07/01/1997): first!! wait no\\n\\n...48,287 more entries...')">VIEW IT!</button>
+    </div>`;
+
+    const midi = `<div class="_gutter-hd">🎵 NOW PLAYING 🎵</div>
+    <div class="_gutter-midi">
+      <div style="color:#00ff00;font-size:0.55rem;margin-bottom:4px">♫ sandstorm.mid ♫</div>
+      <div style="background:#222;height:20px;border:1px inset #444;margin-bottom:4px;display:flex;align-items:flex-end;justify-content:center;gap:1px;padding:2px">
+        <div style="width:4px;background:#0f0;animation:_bounce 0.4s ease infinite;height:60%"></div>
+        <div style="width:4px;background:#0f0;animation:_bounce 0.6s ease infinite;height:80%"></div>
+        <div style="width:4px;background:#0f0;animation:_bounce 0.3s ease infinite;height:40%"></div>
+        <div style="width:4px;background:#0f0;animation:_bounce 0.5s ease infinite;height:70%"></div>
+        <div style="width:4px;background:#0f0;animation:_bounce 0.7s ease infinite;height:50%"></div>
+        <div style="width:4px;background:#0f0;animation:_bounce 0.35s ease infinite;height:90%"></div>
+        <div style="width:4px;background:#0f0;animation:_bounce 0.55s ease infinite;height:45%"></div>
+      </div>
+      <span class="_gutter-midi-btn" onclick="alert('Your Sound Blaster 16 is not responding.\\n\\nPlease check IRQ 5.')">⏵ Play</span>
+      <span class="_gutter-midi-btn" onclick="alert('Paused. The silence is deafening.')">⏸ Stop</span>
+      <div style="color:#888;font-size:0.48rem;margin-top:4px">Requires Winamp 2.0+</div>
+    </div>`;
+
+    const browserBadge = `<div style="text-align:center;margin:8px 0">
+      <button class="_gutter-btn" onclick="alert('Netscape Navigator 4.0 Gold\\n\\nDownload size: 14.2 MB\\nEstimated time on 28.8k modem: 1 hour 12 minutes\\n\\nPlease insert Disk 1 of 23.')">
+        🌐 Best viewed in<br>NETSCAPE 4.0
+      </button>
+      <button class="_gutter-btn" onclick="alert('Microsoft Internet Explorer 5.0\\n\\nThis download requires Windows 95 OSR2 or later.\\n\\nWARNING: May replace your default browser, homepage, search engine, wallpaper, and sense of self.')">
+        🔵 Get Internet<br>Explorer 5.0!
+      </button>
+      <button class="_gutter-btn" onclick="alert('AOL Instant Messenger\\n\\nScreen Name: LunchV0t3r97\\nStatus: 🍔 brb lunch')">
+        💬 AIM: LunchV0t3r97
+      </button>
+    </div>`;
+
+    const counter2 = `<div style="text-align:center;margin:8px 0;padding:6px;border:2px groove #888;background:rgba(0,0,0,0.3)">
+      <div style="color:#ff00ff;font-size:0.55rem;font-weight:900;animation:_blink 1.5s step-end infinite">⚠️ YOU ARE BEING WATCHED ⚠️</div>
+      <div style="color:#ff0000;font-size:0.55rem;margin-top:2px">IP LOGGED: 127.0.0.1</div>
+      <div style="color:#888;font-size:0.45rem;margin-top:2px">dont even try it buddy</div>
+    </div>`;
+
+    g.innerHTML = webring + awards + `<hr class="_gutter-hr">` + links + `<hr class="_gutter-hr">` + guestbook + `<hr class="_gutter-hr">` + midi + `<hr class="_gutter-hr">` + browserBadge + `<hr class="_gutter-hr">` + counter2;
+    document.body.appendChild(g);
+  }
+
+  function _buildRightGutter() {
+    const g = document.createElement('div');
+    g.id = '_gutter-r'; g.className = '_gutter _gutter-r';
+
+    const clock = `<div class="_gutter-hd">🕐 SERVER TIME 🕐</div>
+    <div class="_gutter-clock" id="_gutter-clock-display">--:--:--</div>`;
+
+    const webcam = `<div class="_gutter-hd">📹 OFFICE WEBCAM 📹</div>
+    <div class="_gutter-webcam">
+      <div class="_gutter-webcam-img">[ NO SIGNAL ]</div>
+      <div style="margin-top:3px">Refreshes every 30 sec</div>
+      <div style="color:#ff0000;font-size:0.5rem;margin-top:2px" class="_gutter-blink">● LIVE</div>
+    </div>`;
+
+    const hotdog = `<div class="_gutter-hd"><span class="_gutter-rainbow">HOT DEALS!!!</span></div>
+    <div class="_gutter-tip">
+      <div class="_gutter-blink" style="color:#ff0000;font-weight:900">🚨 ALERT 🚨</div>
+      <div style="margin-top:3px">FREE LUNCH voucher for the <span style="color:#ffff00">1,000,000th</span> visitor!</div>
+      <button class="_gutter-btn" onclick="alert('CONGRATULATIONS!!!\\n\\nYou have been selected for a FREE LUNCH.\\n\\nTo claim, please fax your Social Security number to 1-800-NOT-REAL.\\n\\nOffer expires: NEVER (already expired)')">CLAIM NOW!!!</button>
+    </div>
+    <div class="_gutter-tip">
+      <div style="color:#ffff00;font-weight:900">💰 MAKE $$$</div>
+      <div style="margin-top:3px">Work from home! Vote on lunches! Earn $47,000/week!</div>
+      <button class="_gutter-btn" onclick="alert('Thank you for your interest in our Work From Home Lunch Voting opportunity!\\n\\nStartup fee: only $299.99\\nMonthly fee: only $49.99\\nLunch fee: only $lunch\\n\\nResults not typical. Or possible.')">LEARN MORE</button>
+    </div>`;
+
+    const poll = `<div class="_gutter-hd">📊 TODAY'S POLL 📊</div>
+    <div style="background:rgba(0,0,0,0.3);border:2px inset #444;padding:6px;margin:6px 0">
+      <div style="color:#ffff00;font-size:0.58rem;font-weight:700;margin-bottom:4px">Is this the best lunch voting site ever?</div>
+      <div style="margin:2px 0;font-size:0.55rem"><input type="radio" name="_gpoll" checked> Yes</div>
+      <div style="margin:2px 0;font-size:0.55rem"><input type="radio" name="_gpoll"> Absolutely</div>
+      <div style="margin:2px 0;font-size:0.55rem"><input type="radio" name="_gpoll"> Without question</div>
+      <div style="margin:2px 0;font-size:0.55rem"><input type="radio" name="_gpoll"> I need help</div>
+      <button class="_gutter-btn" onclick="alert('Thank you for voting!\\n\\nResults:\\n  Yes: 48%\\n  Absolutely: 31%\\n  Without question: 20%\\n  I need help: 1%\\n\\nTotal votes: 2\\n(Both were the webmaster)')">VOTE!</button>
+      <div style="font-size:0.45rem;color:#888;margin-top:3px">Total votes: 14,829</div>
+    </div>`;
+
+    const horoscope = `<div class="_gutter-hd">🔮 LUNCH HOROSCOPE 🔮</div>
+    <div style="background:rgba(128,0,128,0.15);border:2px ridge #800080;padding:6px;margin:6px 0;text-align:center">
+      <div style="font-size:1.2rem">🔮</div>
+      <div style="color:#ff88ff;font-size:0.55rem;font-style:italic;margin:4px 0">"The stars say you will eat something today. Probably food. Mercury is in Gatorade."</div>
+      <div style="color:#888;font-size:0.45rem">Updated daily (last update: 03/14/2002)</div>
+    </div>`;
+
+    const hackerZone = `<div style="border:2px solid #00ff00;background:#000;padding:6px;margin:8px 0;text-align:center">
+      <div style="color:#00ff00;font-size:0.6rem;font-weight:900">[ HACKER ZONE ]</div>
+      <div style="color:#00ff00;font-size:2rem;animation:_spin 4s linear infinite">💀</div>
+      <div style="color:#00ff00;font-size:0.5rem;margin:4px 0" class="_gutter-blink">HACK THE PLANET</div>
+      <div style="color:#888;font-size:0.45rem">This site protected by<br>McAfee VirusScan '98</div>
+    </div>`;
+
+    const webringSouth = `<div class="_gutter-ring">
+      <div style="color:#ff8800;font-weight:900;font-size:0.6rem;margin-bottom:3px">💀 RING OF FIRE 💀</div>
+      <div style="color:#ff4400;font-size:0.5rem;margin-bottom:4px">The Extreme Food Webring</div>
+      <a href="#" onclick="return false" style="font-size:0.55rem">⬅ Prev</a> |
+      <a href="#" onclick="alert('Redirecting to a random Angelfire page...\\n\\n...just kidding, they\\'re all gone.');return false" style="font-size:0.55rem">🎲</a> |
+      <a href="#" onclick="return false" style="font-size:0.55rem">Next ➡</a>
+      <div style="font-size:0.45rem;color:#888;margin-top:3px">Ring maintained by xXxFoodLord2000xXx</div>
+    </div>`;
+
+    const marqueeVert = `<div style="height:80px;overflow:hidden;border:2px groove #888;margin:6px 0;background:#110022;position:relative">
+      <div style="animation:_gscrollV 12s linear infinite;position:absolute;width:100%;text-align:center;color:#ff00ff;font-size:0.55rem;font-weight:700;line-height:1.8">
+        <div>★ EAT ★</div>
+        <div>★ SLEEP ★</div>
+        <div>★ VOTE ★</div>
+        <div>★ REPEAT ★</div>
+        <div>★ EAT ★</div>
+        <div>★ SLEEP ★</div>
+        <div>★ VOTE ★</div>
+        <div>★ REPEAT ★</div>
+      </div>
+    </div>`;
+
+    const disclaimer = `<div style="border:1px solid #333;padding:5px;margin:8px 0;font-size:0.42rem;color:#666;text-align:center">
+      © 1997-2026 LunchVote Inc.<br>
+      All rights reserved. No rights observed.<br>
+      Not responsible for bad lunches, food comas, or existential dread.<br>
+      <span class="_gutter-blink" style="color:#ff0000">DO NOT REDISTRIBUTE</span><br>
+      Made with 💔 on a Pentium II
+    </div>`;
+
+    g.innerHTML = clock + webcam + `<hr class="_gutter-hr">` + hotdog + `<hr class="_gutter-hr">` + poll + `<hr class="_gutter-hr">` + horoscope + `<hr class="_gutter-hr">` + hackerZone + `<hr class="_gutter-hr">` + webringSouth + marqueeVert + disclaimer;
+    document.body.appendChild(g);
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes _gscrollV { 0%{top:80px} 100%{top:-120px} }`;
+    document.head.appendChild(style);
+  }
+
+  function _startGutterClock() {
+    if (_gutterClockInt) clearInterval(_gutterClockInt);
+    _gutterClockInt = setInterval(() => {
+      const el = document.getElementById('_gutter-clock-display');
+      if (!el) { clearInterval(_gutterClockInt); return; }
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+    }, 1000);
   }
 
   // ── UTILS ─────────────────────────────────────────────────────────────────────
