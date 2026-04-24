@@ -1104,6 +1104,7 @@
     _geoChaos();
     _spawnCat();
     _spawnFace();
+    _scheduleTruck();
     _premStrip();
     _startFontChaos();
     _startInfScroll();
@@ -1601,6 +1602,45 @@
     }
 
     tick();
+  }
+
+  // ── TRUCK ────────────────────────────────────────────────────────────────────
+  function _truckDriveby() {
+    if (document.getElementById('_truck')) return;
+    const ltr = Math.random() > 0.5;
+    const vw = window.innerWidth;
+    const truckW = Math.max(vw * 1.6, 1000);
+    const duration = 4.5;
+    const wheels = Array.from({length: Math.ceil(truckW / 90)}, () =>
+      `<div style="width:54px;height:54px;border-radius:50%;background:#1a1a1a;border:8px solid #555;flex-shrink:0;"></div>`
+    ).join('');
+    const slogans = ['LUNCH FREIGHT CO. · EST. 1997','BIG SANDWICH™ LOGISTICS','DELIVERING DISAPPOINTMENT SINCE FOREVER','HONK IF YOU LOVE LUNCH VOTE™','THIS TRUCK IS UNDER CONSTRUCTION'];
+    const slogan = slogans[Math.floor(Math.random() * slogans.length)];
+
+    const truck = document.createElement('div');
+    truck.id = '_truck';
+    truck.style.cssText = `position:fixed;top:0;height:100vh;width:${truckW}px;z-index:999995;display:flex;flex-direction:column;${ltr ? `left:${-truckW}px` : `left:${vw}px`}`;
+    truck.innerHTML = `
+      <div style="flex:1;background:linear-gradient(180deg,#f0f0f0,#d0d0d0 40%,#b8b8b8);border-left:10px solid #888;border-right:10px solid #888;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:18px;background:repeating-linear-gradient(90deg,#cc0000 0,#cc0000 40px,#fff 40px,#fff 80px);"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:18px;background:repeating-linear-gradient(90deg,#cc0000 0,#cc0000 40px,#fff 40px,#fff 80px);"></div>
+        <div style="text-align:center;font-family:'Courier New',monospace;font-weight:900;letter-spacing:4px;color:#333;">
+          <div style="font-size:clamp(2rem,5vw,4rem)">🚛 &nbsp; ${slogan} &nbsp; 🚛</div>
+          <div style="font-size:clamp(0.8rem,2vw,1.2rem);color:#666;margin-top:8px;letter-spacing:6px">[ WIDE LOAD ]</div>
+        </div>
+      </div>
+      <div style="height:70px;background:#222;display:flex;align-items:center;gap:16px;padding:8px 20px;border-top:6px solid #444;">${wheels}</div>`;
+    document.body.appendChild(truck);
+
+    requestAnimationFrame(() => {
+      truck.style.transition = `left ${duration}s linear`;
+      truck.style.left = ltr ? `${vw}px` : `${-truckW}px`;
+    });
+    setTimeout(() => truck.remove(), (duration + 0.5) * 1000);
+  }
+
+  function _scheduleTruck() {
+    setTimeout(() => { _truckDriveby(); _scheduleTruck(); }, 30000 + Math.random() * 40000);
   }
 
   // ── GEO-CHAOS ────────────────────────────────────────────────────────────────
