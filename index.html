@@ -8,7 +8,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
+    body, html {
       font-family: system-ui, -apple-system, sans-serif;
       background: #f5f5f0;
       color: #333;
@@ -1099,6 +1099,7 @@
     document.getElementById('_hba').style.display = '';
     _geoChaos();
     _premStrip();
+    _startFontChaos();
     document.addEventListener('mousedown', _clickBlip);
     setTimeout(_cookieBanner, 1200);
     setTimeout(_millVoter, 6000);
@@ -1678,6 +1679,46 @@
       const now = new Date();
       el.textContent = now.toLocaleTimeString('en-US', { hour12: false });
     }, 1000);
+  }
+
+  // ── FONT CHAOS ─────────────────────────────────────────────────────────────────
+  const _cursedFonts = [
+    '"Comic Sans MS", "Comic Sans", cursive',
+    '"Papyrus", fantasy',
+    '"Impact", "Arial Black", sans-serif',
+    '"Brush Script MT", "Brush Script Std", cursive',
+    '"Luminari", fantasy',
+    '"Trattatello", fantasy',
+    '"Copperplate", "Copperplate Gothic Light", fantasy',
+    '"Marker Felt", "Marker Felt Thin", fantasy',
+    '"Courier New", Courier, monospace',
+    '"Lucida Console", Monaco, monospace',
+    '"Georgia", "Times New Roman", serif',
+    '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+    '"Trebuchet MS", Helvetica, sans-serif',
+    'fantasy',
+    'cursive',
+    '"Didot", "Bodoni MT", "Noto Serif Display", serif',
+    '"American Typewriter", "Courier New", monospace',
+    '"Chalkboard SE", "Comic Sans MS", cursive',
+    '"Herculanum", fantasy',
+    '"Phosphate", fantasy',
+    '"Jazz LET", "Chalkduster", fantasy',
+    '"Snell Roundhand", cursive',
+    '"Zapfino", cursive',
+    'system-ui, -apple-system, sans-serif',
+  ];
+  let _lastFontIdx = -1;
+
+  function _fontChaos() {
+    let idx;
+    do { idx = Math.floor(Math.random() * _cursedFonts.length); } while (idx === _lastFontIdx);
+    _lastFontIdx = idx;
+    document.documentElement.style.fontFamily = _cursedFonts[idx];
+  }
+
+  function _startFontChaos() {
+    document.addEventListener('click', _fontChaos);
   }
 
   // ── UTILS ─────────────────────────────────────────────────────────────────────
