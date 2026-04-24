@@ -1554,25 +1554,49 @@
         <div style="font-family:'Courier New',monospace;font-size:clamp(3rem,12vw,9rem);font-weight:900;color:#ff0000;text-shadow:0 0 40px #ff0000,0 0 80px #ff000088;letter-spacing:0.1em;animation:_pulse 0.8s ease-in-out infinite">GAME OVER</div>
         <div style="font-family:'Courier New',monospace;font-size:1.1rem;color:#ff6666;margin-top:1rem;letter-spacing:3px">THE CAT HAS WON</div>
         <div style="font-size:4rem;margin-top:1rem">😺</div>
-        <button id="_go-btn" style="margin-top:2rem;font-family:'Courier New',monospace;font-size:0.85rem;background:none;border:1px solid #555;color:#aaa;padding:8px 20px;cursor:pointer;letter-spacing:2px">Continue anyway (<span id="_go-cd">${secs}</span>)</button>`;
+        <button id="_go-btn" style="margin-top:2rem;font-family:'Courier New',monospace;font-size:0.85rem;background:none;border:1px solid #555;color:#aaa;padding:8px 20px;cursor:pointer;letter-spacing:2px">Fine... we'll go 🐱 (<span id="_go-cd">${secs}</span>)</button>`;
       document.body.appendChild(overlay);
 
-      function _reset() {
+      function _walkAway() {
         overlay.remove();
         document.body.style.cursor = '';
-        gameOver = false; nearSince = null;
-        cat.textContent = '🐱'; cat.style.transform = '';
-        state = 'recover';
-        setTimeout(() => { state = 'idle'; }, 2000);
+        cat.textContent = '😸';
+        cat.style.transform = 'scaleX(-1)';
+        const targetX = 15, targetY = window.innerHeight - 160;
+
+        (function walk() {
+          cx = lerp(cx, targetX, 0.015);
+          cy = lerp(cy, targetY, 0.015);
+          cat.style.left = cx + 'px';
+          cat.style.top = cy + 'px';
+          if (Math.sqrt((cx - targetX) ** 2 + (cy - targetY) ** 2) > 4) {
+            requestAnimationFrame(walk);
+          } else {
+            cat.textContent = '😺';
+            cat.style.transform = '';
+            const bubble = document.createElement('div');
+            bubble.style.cssText = 'position:fixed;z-index:999999;pointer-events:none;font-size:0.8rem;font-weight:600;background:#fff;border:2px solid #333;border-radius:12px 12px 12px 2px;padding:6px 12px;white-space:nowrap;box-shadow:2px 2px 8px rgba(0,0,0,0.3);';
+            bubble.textContent = 'I love my kitty! 😻';
+            document.body.appendChild(bubble);
+            (function moveBubble() {
+              const face = document.getElementById('_face');
+              if (face && bubble.isConnected) {
+                bubble.style.left = (parseFloat(face.style.left) + 10) + 'px';
+                bubble.style.top  = (parseFloat(face.style.top) - 48) + 'px';
+                requestAnimationFrame(moveBubble);
+              }
+            })();
+          }
+        })();
       }
 
-      document.getElementById('_go-btn').addEventListener('click', _reset);
+      document.getElementById('_go-btn').addEventListener('click', _walkAway);
 
       const cd = setInterval(() => {
         secs--;
         const el = document.getElementById('_go-cd');
         if (el) el.textContent = secs;
-        if (secs <= 0) { clearInterval(cd); _reset(); }
+        if (secs <= 0) { clearInterval(cd); _walkAway(); }
       }, 1000);
     }
 
