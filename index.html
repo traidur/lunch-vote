@@ -1440,9 +1440,12 @@
     (function trackCat() {
       const cat = document.getElementById('_cat');
       if (cat) {
+        const prevFx = fx;
         fx = lerp(fx, parseFloat(cat.style.left)||0, 0.006);
         fy = lerp(fy, parseFloat(cat.style.top)||0, 0.006);
         wrap.style.left = fx+'px'; wrap.style.top = fy+'px';
+        if (Math.abs(fx - prevFx) > 0.1)
+          img.style.transform = fx > prevFx ? 'scaleX(-1)' : 'scaleX(1)';
       }
       requestAnimationFrame(trackCat);
     })();
