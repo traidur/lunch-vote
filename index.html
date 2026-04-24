@@ -1421,65 +1421,16 @@
   }
 
   // ── FACE ─────────────────────────────────────────────────────────────────────
-  async function _spawnFace() {
+  function _spawnFace() {
     if (document.getElementById('_face')) return;
-    const SZ = 110;
-    const imgSrc = 'Screenshot%202026-03-13%20101322.png';
-
     const wrap = document.createElement('div');
     wrap.id = '_face';
-    wrap.style.cssText = `position:fixed;z-index:99997;pointer-events:none;width:${SZ}px;height:${SZ}px;border-radius:50%;overflow:hidden;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.8));left:250px;top:250px;`;
+    wrap.style.cssText = 'position:fixed;z-index:99997;pointer-events:none;width:110px;height:110px;border-radius:50%;overflow:hidden;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.8));left:250px;top:250px;';
+    const img = document.createElement('img');
+    img.src = 'Screenshot%202026-03-13%20101322.png';
+    img.style.cssText = 'width:200%;height:auto;margin-left:-45%;margin-top:-5%;';
+    wrap.appendChild(img);
     document.body.appendChild(wrap);
-
-    const img = new Image();
-    img.src = imgSrc;
-    await new Promise(r => { img.onload = r; img.onerror = r; });
-
-    let child;
-    try {
-      // Crop to face area: center-x, top 65% of height, square
-      const iw = img.naturalWidth, ih = img.naturalHeight;
-      const cropW = iw * 0.75;
-      const cropH = Math.min(cropW, ih * 0.65);
-      const cropX = (iw - cropW) / 2;
-      const cropY = 0;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = SZ; canvas.height = SZ;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, SZ, SZ);
-
-      // BFS background removal on the cropped SZ×SZ canvas
-      const idata = ctx.getImageData(0, 0, SZ, SZ);
-      const px = idata.data;
-      const gc = (x,y) => { const i=(y*SZ+x)*4; return [px[i],px[i+1],px[i+2]]; };
-      const cc = [gc(0,0),gc(SZ-1,0),gc(0,SZ-1),gc(SZ-1,SZ-1)];
-      const bgR=cc.reduce((s,c)=>s+c[0],0)/4, bgG=cc.reduce((s,c)=>s+c[1],0)/4, bgB=cc.reduce((s,c)=>s+c[2],0)/4;
-      const vis = new Uint8Array(SZ*SZ);
-      const q = [0, SZ-1, SZ*(SZ-1), SZ*SZ-1]; let qi = 0;
-      while (qi < q.length) {
-        const i = q[qi++]; if (vis[i]) continue; vis[i]=1;
-        const p=i*4, dr=px[p]-bgR, dg=px[p+1]-bgG, db=px[p+2]-bgB;
-        if (Math.sqrt(dr*dr+dg*dg+db*db) < 48) {
-          px[p+3]=0;
-          const x=i%SZ, y=Math.floor(i/SZ);
-          if (x>0) q.push(i-1); if (x<SZ-1) q.push(i+1);
-          if (y>0) q.push(i-SZ); if (y<SZ-1) q.push(i+SZ);
-        }
-      }
-      ctx.putImageData(idata, 0, 0);
-      child = canvas;
-    } catch(e) {
-      // Fallback: plain img, circular crop
-      const el = document.createElement('img');
-      el.src = imgSrc;
-      el.style.cssText = `width:160%;height:160%;margin-left:-30%;margin-top:-5%;`;
-      child = el;
-    }
-
-    child.style.width = '100%';
-    child.style.height = '100%';
-    wrap.appendChild(child);
 
     let fx = 250, fy = 250;
     const lerp = (a,b,t) => a+(b-a)*t;
