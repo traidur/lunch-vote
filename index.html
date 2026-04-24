@@ -1468,14 +1468,6 @@
 
         if (gameOver) { requestAnimationFrame(tick); return; }
 
-        // Track how long cat has been on the cursor
-        if (dist < 40 && state !== 'recover') {
-          if (!nearSince) nearSince = Date.now();
-          else if (Date.now() - nearSince > 500) { _gameOver(); return; }
-        } else {
-          nearSince = null;
-        }
-
         if (state === 'recover') {
           cx = lerp(cx, mx - Math.sign(dx) * 160, 0.025);
           cy = lerp(cy, my - Math.sign(dy) * 160, 0.025);
@@ -1521,10 +1513,13 @@
           if (t < 18) requestAnimationFrame(step);
           else {
             cat.textContent = '😸';
+            // Give the user 500ms to escape — if cursor is still here, game over
             setTimeout(() => {
-              cat.textContent = '🐱'; state = 'recover';
-              setTimeout(() => { state = 'idle'; }, 2500);
-            }, 700);
+              if (gameOver) return;
+              const d = Math.sqrt((mx-cx)**2 + (my-cy)**2);
+              if (d < 80) { _gameOver(); }
+              else { cat.textContent = '🐱'; state = 'recover'; setTimeout(() => { state = 'idle'; }, 2500); }
+            }, 500);
           }
         })();
       }
