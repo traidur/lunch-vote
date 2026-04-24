@@ -329,8 +329,8 @@
     ._gutter-tip { background:#330000; border:1px solid #ff0000; padding:5px; margin:6px 0; color:#ff6666; font-size:0.58rem; text-align:center; }
     ._gutter-webcam { background:#111; border:2px groove #666; padding:4px; margin:6px 0; text-align:center; font-size:0.55rem; color:#999; }
     ._gutter-webcam-img { width:100%; height:60px; background:repeating-linear-gradient(0deg,#111 0,#111 2px,#222 2px,#222 4px); display:flex; align-items:center; justify-content:center; color:#444; font-size:0.7rem; }
-    ._subway-surfers { position:fixed; top:0; bottom:0; left:184px; width:calc((100vw - 760px) / 2 - 184px + 180px); z-index:9987; pointer-events:none; overflow:hidden; }
-    ._subway-surfers iframe { width:100%; height:100%; border:none; pointer-events:none; }
+    ._subway-surfers { position:fixed; top:50%; left:calc(184px + ((50vw - 380px - 184px) / 2)); transform:translateY(-50%); width:180px; height:320px; z-index:9987; pointer-events:none; overflow:hidden; border:3px ridge #888; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.6); }
+    ._subway-surfers iframe { width:300%; height:100%; border:none; pointer-events:none; margin-left:-100%; }
     @media (max-width: 1200px) { ._gutter, ._subway-surfers { display:none !important; } }
 
     .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
