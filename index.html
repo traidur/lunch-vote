@@ -1425,10 +1425,10 @@
     if (document.getElementById('_face')) return;
     const wrap = document.createElement('div');
     wrap.id = '_face';
-    wrap.style.cssText = 'position:fixed;z-index:99997;pointer-events:none;width:110px;height:110px;border-radius:50%;overflow:hidden;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.8));left:250px;top:250px;';
+    wrap.style.cssText = 'position:fixed;z-index:99997;pointer-events:none;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.8));left:250px;top:250px;';
     const img = document.createElement('img');
     img.src = 'Screenshot%202026-03-13%20101322.png';
-    img.style.cssText = 'width:200%;height:auto;margin-left:-45%;margin-top:-5%;';
+    img.style.cssText = 'width:120px;height:auto;display:block;';
     wrap.appendChild(img);
     document.body.appendChild(wrap);
 
