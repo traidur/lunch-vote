@@ -1437,8 +1437,8 @@
     (function trackCat() {
       const cat = document.getElementById('_cat');
       if (cat) {
-        fx = lerp(fx, parseFloat(cat.style.left)||0, 0.018);
-        fy = lerp(fy, parseFloat(cat.style.top)||0, 0.018);
+        fx = lerp(fx, parseFloat(cat.style.left)||0, 0.006);
+        fy = lerp(fy, parseFloat(cat.style.top)||0, 0.006);
         wrap.style.left = fx+'px'; wrap.style.top = fy+'px';
       }
       requestAnimationFrame(trackCat);
@@ -1461,6 +1461,17 @@
     document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
 
     function tick() {
+      // Always check — runs every frame regardless of state
+      if (!gameOver) {
+        const catDist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
+        if (catDist < 60) {
+          if (!nearSince) nearSince = Date.now();
+          else if (Date.now() - nearSince >= 500) { _gameOver(); return; }
+        } else {
+          nearSince = null;
+        }
+      }
+
       if (state !== 'pounce') {
         const dx = mx - cx, dy = my - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1513,13 +1524,11 @@
           if (t < 18) requestAnimationFrame(step);
           else {
             cat.textContent = '😸';
-            // Give the user 500ms to escape — if cursor is still here, game over
             setTimeout(() => {
               if (gameOver) return;
-              const d = Math.sqrt((mx-cx)**2 + (my-cy)**2);
-              if (d < 80) { _gameOver(); }
-              else { cat.textContent = '🐱'; state = 'recover'; setTimeout(() => { state = 'idle'; }, 2500); }
-            }, 500);
+              cat.textContent = '🐱'; state = 'recover';
+              setTimeout(() => { state = 'idle'; }, 2500);
+            }, 700);
           }
         })();
       }
