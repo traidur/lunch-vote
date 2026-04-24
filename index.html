@@ -1098,6 +1098,7 @@
     _genBannerAd();
     document.getElementById('_hba').style.display = '';
     _geoChaos();
+    _spawnCat();
     _premStrip();
     _startFontChaos();
     _startInfScroll();
@@ -1413,6 +1414,83 @@
       </div>
     </div>`;
     document.body.appendChild(d);
+  }
+
+  // ── CAT ──────────────────────────────────────────────────────────────────────
+  function _spawnCat() {
+    if (document.getElementById('_cat')) return;
+    const cat = document.createElement('div');
+    cat.id = '_cat';
+    cat.style.cssText = 'position:fixed;z-index:99999;pointer-events:none;font-size:2.5rem;line-height:1;user-select:none;left:100px;top:100px;';
+    cat.textContent = '🐱';
+    document.body.appendChild(cat);
+
+    let cx = 100, cy = 100, mx = 300, my = 300, state = 'idle';
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+    function tick() {
+      if (state !== 'pounce') {
+        const dx = mx - cx, dy = my - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (Math.abs(dx) > 5) cat.style.transform = `scaleX(${dx < 0 ? -1 : 1})`;
+
+        if (state === 'recover') {
+          cx = lerp(cx, mx - Math.sign(dx) * 160, 0.025);
+          cy = lerp(cy, my - Math.sign(dy) * 160, 0.025);
+        } else if (dist > 320) {
+          state = 'chase'; cat.textContent = '😾';
+          cx = lerp(cx, mx, 0.07); cy = lerp(cy, my, 0.07);
+        } else if (dist > 85) {
+          state = 'stalk'; cat.textContent = '😼';
+          cx = lerp(cx, mx, 0.03); cy = lerp(cy, my, 0.03);
+        } else if (state !== 'recover') {
+          state = 'pounce';
+          _catPounce(cx, cy, mx, my);
+        }
+
+        if (state !== 'pounce') { cat.style.left = cx + 'px'; cat.style.top = cy + 'px'; }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function _catPounce(fx, fy, tx, ty) {
+      cat.textContent = '🙀';
+      let w = 0;
+      const dir = fx < tx ? 1 : -1;
+      (function wiggle() {
+        w++;
+        cat.style.transform = `scaleX(${dir}) rotate(${Math.sin(w * 0.9) * 18}deg)`;
+        if (w < 18) requestAnimationFrame(wiggle);
+        else {
+          cat.style.transform = `scaleX(${dir})`;
+          jump();
+        }
+      })();
+
+      function jump() {
+        const peakX = (fx + tx) / 2, peakY = Math.min(fy, ty) - 130;
+        let t = 0;
+        (function step() {
+          t++;
+          const p = t / 18;
+          cx = (1-p)*(1-p)*fx + 2*(1-p)*p*peakX + p*p*tx;
+          cy = (1-p)*(1-p)*fy + 2*(1-p)*p*peakY + p*p*ty;
+          cat.style.left = cx + 'px'; cat.style.top = cy + 'px';
+          if (t < 18) requestAnimationFrame(step);
+          else {
+            cat.textContent = '😸';
+            setTimeout(() => {
+              cat.textContent = '🐱'; state = 'recover';
+              setTimeout(() => { state = 'idle'; }, 2500);
+            }, 700);
+          }
+        })();
+      }
+    }
+
+    tick();
   }
 
   // ── GEO-CHAOS ────────────────────────────────────────────────────────────────
