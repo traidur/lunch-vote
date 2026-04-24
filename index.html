@@ -1811,25 +1811,30 @@
   }
 
   // ── INFINITE SCROLL ───────────────────────────────────────────────────────────
-  let _infScrollActive = false;
+  let _infScrollActive = false, _infPending = false;
 
   function _startInfScroll() {
     if (_infScrollActive) return;
     _infScrollActive = true;
-    window.addEventListener('scroll', _infScrollCheck);
+    window.addEventListener('scroll', _infScrollCheck, { passive: true });
   }
 
   function _infScrollCheck() {
+    if (_infPending) return;
     const scrollBottom = window.innerHeight + window.scrollY;
     const docHeight = document.documentElement.scrollHeight;
-    if (scrollBottom >= docHeight - 50) {
-      const main = document.querySelector('main');
-      if (!main) return;
-      const clone = main.cloneNode(true);
-      clone.removeAttribute('id');
-      clone.classList.add('_inf-clone');
-      clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-      main.parentElement.insertBefore(clone, main.nextSibling);
+    if (scrollBottom >= docHeight - 200) {
+      _infPending = true;
+      requestAnimationFrame(() => {
+        const main = document.querySelector('main');
+        if (!main) { _infPending = false; return; }
+        const clone = main.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.classList.add('_inf-clone');
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+        document.body.appendChild(clone);
+        _infPending = false;
+      });
     }
   }
 
