@@ -1867,19 +1867,12 @@
     btn.id = '_report-btn';
     btn.className = '_report-btn';
     btn.textContent = '⚠ Report a Problem';
-    const rightGutter = 180;
-    const mainHalf = 380;
-    const gap = window.innerWidth - rightGutter - ((window.innerWidth + mainHalf) / 2);
-    const rightZoneLeft = window.innerWidth - rightGutter;
-    const safeLeft = rightZoneLeft - 180;
+    btn.style.right = '200px';
     btn.style.top = '50%';
-    btn.style.left = safeLeft + 'px';
 
     btn.addEventListener('mouseover', () => {
-      const rLeft = window.innerWidth - rightGutter;
-      const lLeft = mainHalf + ((window.innerWidth - mainHalf) / 2);
-      const minX = lLeft + 10;
-      const maxX = rLeft - 180;
+      const minX = 200;
+      const maxX = window.innerWidth - 200;
       const minY = 60;
       const maxY = window.innerHeight - 60;
       let newX, newY;
@@ -1887,10 +1880,10 @@
       do {
         newX = minX + Math.random() * (maxX - minX);
         newY = minY + Math.random() * (maxY - minY);
-      } while (Math.abs(newX - rect.left) < 100 && Math.abs(newY - rect.top) < 80);
+      } while (Math.abs(newX - rect.left) < 120 && Math.abs(newY - rect.top) < 80);
+      btn.style.right = 'auto';
       btn.style.left = newX + 'px';
       btn.style.top = newY + 'px';
-      btn.style.transform = 'none';
     });
 
     btn.addEventListener('click', () => {
