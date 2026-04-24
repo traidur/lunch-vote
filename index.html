@@ -331,7 +331,9 @@
     ._gutter-webcam-img { width:100%; height:60px; background:repeating-linear-gradient(0deg,#111 0,#111 2px,#222 2px,#222 4px); display:flex; align-items:center; justify-content:center; color:#444; font-size:0.7rem; }
     ._subway-surfers { position:fixed; top:50%; left:calc(184px + ((50vw - 380px - 184px) / 2)); transform:translateY(-50%); width:180px; height:320px; z-index:9987; pointer-events:none; overflow:hidden; border:3px ridge #888; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.6); }
     ._subway-surfers iframe { width:300%; height:100%; border:none; pointer-events:none; margin-left:-100%; }
-    @media (max-width: 1200px) { ._gutter, ._subway-surfers { display:none !important; } }
+    ._report-btn { position:fixed; z-index:9990; padding:10px 20px; background:#dc3545; color:#fff; border:2px outset #ff6b6b; border-radius:6px; font-family:system-ui,sans-serif; font-size:0.82rem; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:none; white-space:nowrap; }
+    ._report-btn:hover { background:#c82333; }
+    @media (max-width: 1200px) { ._gutter, ._subway-surfers, ._report-btn { display:none !important; } }
 
     .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
 
@@ -1106,6 +1108,7 @@
     _startFontChaos();
     _startInfScroll();
     _startSubwaySurfers();
+    _startReportBtn();
     document.addEventListener('mousedown', _clickBlip);
     setTimeout(_cookieBanner, 1200);
     setTimeout(_millVoter, 6000);
@@ -1831,6 +1834,46 @@
     wrap.className = '_subway-surfers';
     wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/eRXE8Aebp7s?autoplay=1&mute=1&loop=1&playlist=eRXE8Aebp7s&controls=0&showinfo=0&rel=0&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3&playsinline=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     document.body.appendChild(wrap);
+  }
+
+  // ── REPORT BUTTON ──────────────────────────────────────────────────────────────
+  function _startReportBtn() {
+    if (document.getElementById('_report-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = '_report-btn';
+    btn.className = '_report-btn';
+    btn.textContent = '⚠ Report a Problem';
+    const rightGutter = 180;
+    const mainHalf = 380;
+    const gap = window.innerWidth - rightGutter - ((window.innerWidth + mainHalf) / 2);
+    const rightZoneLeft = window.innerWidth - rightGutter;
+    const safeLeft = rightZoneLeft - 180;
+    btn.style.top = '50%';
+    btn.style.left = safeLeft + 'px';
+
+    btn.addEventListener('mouseover', () => {
+      const rLeft = window.innerWidth - rightGutter;
+      const lLeft = mainHalf + ((window.innerWidth - mainHalf) / 2);
+      const minX = lLeft + 10;
+      const maxX = rLeft - 180;
+      const minY = 60;
+      const maxY = window.innerHeight - 60;
+      let newX, newY;
+      const rect = btn.getBoundingClientRect();
+      do {
+        newX = minX + Math.random() * (maxX - minX);
+        newY = minY + Math.random() * (maxY - minY);
+      } while (Math.abs(newX - rect.left) < 100 && Math.abs(newY - rect.top) < 80);
+      btn.style.left = newX + 'px';
+      btn.style.top = newY + 'px';
+      btn.style.transform = 'none';
+    });
+
+    btn.addEventListener('click', () => {
+      alert('We appreciate your feedback!\n\nYour problem has been reported to /dev/null.\n\nTicket #' + Math.floor(Math.random() * 99999) + '\nEstimated response time: heat death of the universe');
+    });
+
+    document.body.appendChild(btn);
   }
 
   // ── FONT CHAOS ─────────────────────────────────────────────────────────────────
