@@ -1455,6 +1455,7 @@
     document.body.appendChild(cat);
 
     let cx = 100, cy = 100, mx = 300, my = 300, state = 'idle';
+    let nearSince = null, gameOver = false;
     const lerp = (a, b, t) => a + (b - a) * t;
 
     document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
@@ -1464,6 +1465,16 @@
         const dx = mx - cx, dy = my - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (Math.abs(dx) > 5) cat.style.transform = `scaleX(${dx < 0 ? -1 : 1})`;
+
+        if (gameOver) { requestAnimationFrame(tick); return; }
+
+        // Track how long cat has been on the cursor
+        if (dist < 40 && state !== 'recover') {
+          if (!nearSince) nearSince = Date.now();
+          else if (Date.now() - nearSince > 500) { _gameOver(); return; }
+        } else {
+          nearSince = null;
+        }
 
         if (state === 'recover') {
           cx = lerp(cx, mx - Math.sign(dx) * 160, 0.025);
@@ -1517,6 +1528,21 @@
           }
         })();
       }
+    }
+
+    function _gameOver() {
+      gameOver = true;
+      cat.textContent = '😺';
+      cat.style.transform = 'scale(1.4)';
+      document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\'%3E%3Ccircle cx=\'6\' cy=\'6\' r=\'5\' fill=\'%23ff0000\'/%3E%3C/svg%3E") 6 6, none';
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;';
+      overlay.innerHTML = `
+        <div style="font-family:'Courier New',monospace;font-size:clamp(3rem,12vw,9rem);font-weight:900;color:#ff0000;text-shadow:0 0 40px #ff0000,0 0 80px #ff000088;letter-spacing:0.1em;animation:_pulse 0.8s ease-in-out infinite">GAME OVER</div>
+        <div style="font-family:'Courier New',monospace;font-size:1.1rem;color:#ff6666;margin-top:1rem;letter-spacing:3px">THE CAT HAS WON</div>
+        <div style="font-size:4rem;margin-top:1rem">😺</div>
+        <div style="font-family:'Courier New',monospace;font-size:0.7rem;color:#666;margin-top:2rem;letter-spacing:2px">REFRESH TO PLAY AGAIN</div>`;
+      document.body.appendChild(overlay);
     }
 
     tick();
