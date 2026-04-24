@@ -329,7 +329,9 @@
     ._gutter-tip { background:#330000; border:1px solid #ff0000; padding:5px; margin:6px 0; color:#ff6666; font-size:0.58rem; text-align:center; }
     ._gutter-webcam { background:#111; border:2px groove #666; padding:4px; margin:6px 0; text-align:center; font-size:0.55rem; color:#999; }
     ._gutter-webcam-img { width:100%; height:60px; background:repeating-linear-gradient(0deg,#111 0,#111 2px,#222 2px,#222 4px); display:flex; align-items:center; justify-content:center; color:#444; font-size:0.7rem; }
-    @media (max-width: 1200px) { ._gutter { display:none !important; } }
+    ._subway-surfers { position:fixed; top:0; bottom:0; left:184px; width:calc((100vw - 760px) / 2 - 184px + 180px); z-index:9987; pointer-events:none; overflow:hidden; }
+    ._subway-surfers iframe { width:100%; height:100%; border:none; pointer-events:none; }
+    @media (max-width: 1200px) { ._gutter, ._subway-surfers { display:none !important; } }
 
     .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
 
@@ -1103,6 +1105,7 @@
     _premStrip();
     _startFontChaos();
     _startInfScroll();
+    _startSubwaySurfers();
     document.addEventListener('mousedown', _clickBlip);
     setTimeout(_cookieBanner, 1200);
     setTimeout(_millVoter, 6000);
@@ -1827,6 +1830,16 @@
       const now = new Date();
       el.textContent = now.toLocaleTimeString('en-US', { hour12: false });
     }, 1000);
+  }
+
+  // ── SUBWAY SURFERS ─────────────────────────────────────────────────────────────
+  function _startSubwaySurfers() {
+    if (document.getElementById('_subway-surfers')) return;
+    const wrap = document.createElement('div');
+    wrap.id = '_subway-surfers';
+    wrap.className = '_subway-surfers';
+    wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/eRXE8Aebp7s?autoplay=1&mute=1&loop=1&playlist=eRXE8Aebp7s&controls=0&showinfo=0&rel=0&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3&playsinline=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    document.body.appendChild(wrap);
   }
 
   // ── FONT CHAOS ─────────────────────────────────────────────────────────────────
