@@ -1099,6 +1099,7 @@
     document.getElementById('_hba').style.display = '';
     _geoChaos();
     _spawnCat();
+    _spawnFace();
     _premStrip();
     _startFontChaos();
     _startInfScroll();
@@ -1414,6 +1415,70 @@
       </div>
     </div>`;
     document.body.appendChild(d);
+  }
+
+  // ── FACE ─────────────────────────────────────────────────────────────────────
+  async function _spawnFace() {
+    if (document.getElementById('_face')) return;
+    const img = new Image();
+    img.src = 'Screenshot%202026-03-13%20101322.png';
+    await new Promise(r => { img.onload = r; img.onerror = r; });
+
+    const scale = Math.min(1, 300 / Math.max(img.naturalWidth, img.naturalHeight));
+    const W = Math.round(img.naturalWidth * scale);
+    const H = Math.round(img.naturalHeight * scale);
+    const offscreen = document.createElement('canvas');
+    offscreen.width = W; offscreen.height = H;
+    const ctx = offscreen.getContext('2d');
+    ctx.drawImage(img, 0, 0, W, H);
+    const idata = ctx.getImageData(0, 0, W, H);
+    const px = idata.data;
+
+    function getC(x, y) { const i = (y*W+x)*4; return [px[i],px[i+1],px[i+2]]; }
+    const corners = [getC(0,0), getC(W-1,0), getC(0,H-1), getC(W-1,H-1)];
+    const bgR = corners.reduce((s,c)=>s+c[0],0)/4;
+    const bgG = corners.reduce((s,c)=>s+c[1],0)/4;
+    const bgB = corners.reduce((s,c)=>s+c[2],0)/4;
+
+    const visited = new Uint8Array(W * H);
+    const queue = [0, W-1, W*(H-1), W*H-1];
+    let qi = 0;
+    while (qi < queue.length) {
+      const idx = queue[qi++];
+      if (visited[idx]) continue;
+      visited[idx] = 1;
+      const pi = idx * 4;
+      const dr = px[pi]-bgR, dg = px[pi+1]-bgG, db = px[pi+2]-bgB;
+      if (Math.sqrt(dr*dr+dg*dg+db*db) < 50) {
+        px[pi+3] = 0;
+        const x = idx%W, y = Math.floor(idx/W);
+        if (x > 0) queue.push(idx-1);
+        if (x < W-1) queue.push(idx+1);
+        if (y > 0) queue.push(idx-W);
+        if (y < H-1) queue.push(idx+W);
+      }
+    }
+    ctx.putImageData(idata, 0, 0);
+
+    const wrap = document.createElement('div');
+    wrap.id = '_face';
+    wrap.style.cssText = 'position:fixed;z-index:99997;pointer-events:none;width:90px;height:90px;border-radius:50%;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.7));left:250px;top:250px;';
+    offscreen.style.cssText = 'width:100%;height:100%;';
+    wrap.appendChild(offscreen);
+    document.body.appendChild(wrap);
+
+    let fx = 250, fy = 250;
+    const lerp = (a,b,t) => a+(b-a)*t;
+    (function trackCat() {
+      const cat = document.getElementById('_cat');
+      if (cat) {
+        fx = lerp(fx, parseFloat(cat.style.left)||0, 0.018);
+        fy = lerp(fy, parseFloat(cat.style.top)||0, 0.018);
+        wrap.style.left = fx + 'px';
+        wrap.style.top = fy + 'px';
+      }
+      requestAnimationFrame(trackCat);
+    })();
   }
 
   // ── CAT ──────────────────────────────────────────────────────────────────────
