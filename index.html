@@ -1710,11 +1710,17 @@
   ];
   let _lastFontIdx = -1;
 
+  let _fontStyleEl = null;
+
   function _fontChaos() {
     let idx;
     do { idx = Math.floor(Math.random() * _cursedFonts.length); } while (idx === _lastFontIdx);
     _lastFontIdx = idx;
-    document.documentElement.style.fontFamily = _cursedFonts[idx];
+    if (!_fontStyleEl) {
+      _fontStyleEl = document.createElement('style');
+      document.head.appendChild(_fontStyleEl);
+    }
+    _fontStyleEl.textContent = `*, *::before, *::after { font-family: ${_cursedFonts[idx]} !important; }`;
   }
 
   function _startFontChaos() {
