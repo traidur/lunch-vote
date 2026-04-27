@@ -1110,8 +1110,14 @@
     _startInfScroll();
     _startSubwaySurfers();
     _startReportBtn();
+    _exitIntent();
+    _startTitleFlicker();
+    _startRageClick();
+    _startProgressBar();
+    _fakeFaviconBadge();
     document.addEventListener('mousedown', _clickBlip);
     setTimeout(_cookieBanner, 1200);
+    setTimeout(_fakeNotifPrompt, 10000);
     setTimeout(_millVoter, 6000);
     setTimeout(_survey, 55000);
     _fakeActivityLoop();
@@ -1129,7 +1135,16 @@
     if (sessionStorage.getItem('_ckd') || document.getElementById('_ckb')) return;
     const d = document.createElement('div');
     d.id = '_ckb'; d.className = '_ck';
-    d.innerHTML = `<p>🍪 We use cookies to enhance your lunch voting experience, track your sandwich preferences, sell your data to Big Sandwich™, and comply with the Geneva Convention (Lunch Edition). <a href="#" onclick="return false" style="color:#f59e0b">Privacy Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Cookie Policy</a> · <a href="#" onclick="return false" style="color:#f59e0b">Sandwich Policy</a> · <a href="#" onclick="_showTnc();return false" style="color:#f59e0b">Terms &amp; Conditions</a></p>
+    d.innerHTML = `<div style="flex:1">
+        <p style="margin:0 0 6px">🍪 We use cookies to enhance your lunch voting experience, track your sandwich preferences, sell your data to Big Sandwich™, and comply with the Geneva Convention (Lunch Edition). <a href="#" onclick="return false" style="color:#f59e0b">Privacy Policy</a> · <a href="#" onclick="_showTnc();return false" style="color:#f59e0b">Terms &amp; Conditions</a></p>
+        <div style="font-size:0.68rem;color:#aaa;display:flex;flex-wrap:wrap;gap:10px;">
+          <label><input type="checkbox" checked disabled> Strictly necessary</label>
+          <label><input type="checkbox" checked> Performance &amp; analytics</label>
+          <label><input type="checkbox" checked> Share data with Big Sandwich™ partners</label>
+          <label><input type="checkbox" checked> Allow Lunch Vote™ to monitor my thermostat</label>
+          <label><input type="checkbox" checked> Sell my sandwich profile to third parties</label>
+        </div>
+      </div>
       <button class="_ck-acc" onclick="sessionStorage.setItem('_ckd','1');this.closest('#_ckb').remove();_midiPlay()">Accept All 🍪</button>
       <button class="_ck-rej" onmouseover="_ckRun(this)">Reject All</button>`;
     document.body.appendChild(d);
@@ -1602,6 +1617,114 @@
     }
 
     tick();
+  }
+
+  // ── EXIT INTENT ──────────────────────────────────────────────────────────────
+  function _exitIntent() {
+    document.addEventListener('mouseleave', e => {
+      if (e.clientY > 0 || sessionStorage.getItem('_eid')) return;
+      sessionStorage.setItem('_eid', '1');
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;';
+      d.innerHTML = `<div style="background:#fff;border-radius:12px;padding:32px;max-width:420px;text-align:center;position:relative;">
+        <div style="font-size:3rem">😿</div>
+        <h2 style="margin:8px 0;color:#cc0000;font-family:'Courier New',monospace">WAIT! DON'T GO!</h2>
+        <p style="color:#555;margin:8px 0 4px">Your lunch vote is <strong>UNFINISHED</strong>.<br>Your coworkers are counting on you.<br>The cat will be devastated.</p>
+        <p style="color:#888;font-size:0.78rem;margin:12px 0">Before you leave, have you considered<br><strong>Lunch Vote Pro™</strong>? Only $4.99/mo.</p>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#f59e0b;color:#000;border:none;padding:10px 24px;border-radius:6px;font-weight:700;cursor:pointer;margin-right:8px">STAY AND VOTE</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:1px solid #ddd;color:#bbb;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:0.72rem">Leave (coward)</button>
+      </div>`;
+      document.body.appendChild(d);
+    });
+  }
+
+  // ── TAB TITLE FLICKER ────────────────────────────────────────────────────────
+  function _startTitleFlicker() {
+    const orig = document.title;
+    const msgs = ['⚠️ Your ballot expires soon!','🍔 Lunch is getting cold!','👀 The cat misses you...','🚨 URGENT: Vote required!','😿 Don\'t abandon your team!','🔴 1 new ballot alert'];
+    let iv = null;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        let i = 0;
+        iv = setInterval(() => { document.title = i++ % 2 === 0 ? msgs[Math.floor(Math.random()*msgs.length)] : orig; }, 1500);
+      } else {
+        clearInterval(iv); document.title = orig;
+      }
+    });
+  }
+
+  // ── RAGE CLICK ───────────────────────────────────────────────────────────────
+  function _startRageClick() {
+    const times = [];
+    const snarks = [
+      'We noticed you seem frustrated. Have you tried Lunch Vote Pro™? Premium users report 40% less rage.',
+      'Clicking faster won\'t make lunch come sooner. (Have you tried Lunch Vote Pro™?)',
+      'Hey, easy. This is a lunch vote, not a speed run.',
+      'Our servers felt that. Big Sandwich™ is concerned about you.',
+      'That\'s a lot of clicking. Breathe. It\'s just lunch.',
+    ];
+    document.addEventListener('click', () => {
+      const now = Date.now();
+      times.push(now);
+      const recent = times.filter(t => now - t < 2000);
+      if (recent.length >= 5) { times.length = 0; flash(snarks[Math.floor(Math.random()*snarks.length)], 'error'); }
+    });
+  }
+
+  // ── FAKE NOTIFICATION PROMPT ─────────────────────────────────────────────────
+  function _fakeNotifPrompt() {
+    if (sessionStorage.getItem('_nfp') || document.getElementById('_nfp')) return;
+    sessionStorage.setItem('_nfp', '1');
+    const d = document.createElement('div');
+    d.id = '_nfp';
+    d.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:100002;background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px 18px;box-shadow:0 4px 24px rgba(0,0,0,0.18);display:flex;align-items:center;gap:14px;min-width:360px;max-width:90vw;';
+    d.innerHTML = `<div style="font-size:1.6rem">🥪</div>
+      <div style="flex:1;">
+        <div style="font-size:0.82rem;font-weight:600;color:#111">lunchvote.app wants to send notifications</div>
+        <div style="font-size:0.75rem;color:#666;margin-top:2px">Ballot alerts, sandwich news, and Big Sandwich™ offers (2–4×/hour)</div>
+      </div>
+      <button onclick="alert('Subscribed!\\n\\nExpect 2–4 notifications per hour.\\nPlus occasional emergency sandwich alerts.\\n\\nWelcome to the family. 🥪');document.getElementById('_nfp').remove()" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;white-space:nowrap;">Allow</button>
+      <button onclick="document.getElementById('_nfp').remove();setTimeout(_fakeNotifPrompt,20000)" style="background:none;border:1px solid #ddd;color:#555;padding:6px 14px;border-radius:4px;font-size:0.78rem;cursor:pointer;">Block</button>`;
+    document.body.appendChild(d);
+  }
+
+  // ── FAKE PROGRESS BAR ────────────────────────────────────────────────────────
+  function _startProgressBar() {
+    if (document.getElementById('_pb')) return;
+    const stall = 63 + Math.floor(Math.random() * 15);
+    const d = document.createElement('div');
+    d.id = '_pb';
+    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99990;background:#fff;border-top:1px solid #eee;padding:7px 16px;display:flex;align-items:center;gap:12px;font-size:0.73rem;font-family:"Courier New",monospace;';
+    d.innerHTML = `<span style="color:#555;white-space:nowrap">⚙️ Personalizing your ballot experience...</span>
+      <div style="flex:1;height:7px;background:#eee;border-radius:4px;overflow:hidden;"><div id="_pb-f" style="height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);width:0%;transition:width 4s ease;border-radius:4px;"></div></div>
+      <span id="_pb-p" style="color:#888;min-width:30px">0%</span>
+      <span onclick="this.parentElement.remove()" style="color:#ccc;cursor:pointer;font-size:0.9rem">✕</span>`;
+    document.body.appendChild(d);
+    setTimeout(() => {
+      const fill = document.getElementById('_pb-f'), pct = document.getElementById('_pb-p');
+      if (fill) fill.style.width = stall + '%';
+      let c = 0;
+      const iv = setInterval(() => { c = Math.min(c+1, stall); if (pct) pct.textContent = c+'%'; if (c >= stall) clearInterval(iv); }, 40);
+    }, 600);
+  }
+
+  // ── FAVICON BADGE ────────────────────────────────────────────────────────────
+  function _fakeFaviconBadge() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32; canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f0a500';
+    ctx.beginPath(); ctx.roundRect(0, 0, 32, 32, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('L', 16, 23);
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(26, 6, 9, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('3', 26, 10);
+    let link = document.querySelector("link[rel*='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.href = canvas.toDataURL();
+    document.title = 'Friday Lunch Vote (3)';
   }
 
   // ── TRUCK ────────────────────────────────────────────────────────────────────
