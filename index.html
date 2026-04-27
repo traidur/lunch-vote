@@ -1296,32 +1296,54 @@
   // ── MIDI ENGINE ──────────────────────────────────────────────────────────────
   let _ac = null, _mPlaying = false, _mTimeout = null, _mMaster = null;
 
-  // Sandstorm (Darude) - sawtooth chiptune approximation, 136 BPM
-  // [freq_hz, duration_in_16th_notes]
-  const _S16 = 60 / 136 / 4; // 16th note duration at 136 BPM
-
-  // Sandstorm (Darude) - E minor, 136 BPM
-  // Notes confirmed: B3=246.94, E4=329.63, D4=293.66, A3=220.00
-  // [freq_hz, duration_in_16th_notes]
-  const _SONG = [
-    // Bar 1: B3 staccato riff — "bbbbb-bbbbbbb" + rests
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,1],
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,3],
-    // Bar 2: E4/D4 response — "eeeeeee-dddd" + rests
-    [329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[0,1],
-    [293.66,1],[293.66,1],[293.66,1],[293.66,1],[0,4],
-    // Repeat bars 1-2
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,1],
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,3],
-    [329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[0,1],
-    [293.66,1],[293.66,1],[293.66,1],[293.66,1],[0,4],
-    // Variation: D4×3, rest, A3×2, B3×5, rest, B3×7, E4×2, rest, B3×4, rest×4
-    [293.66,1],[293.66,1],[293.66,1],[0,1],
-    [220.00,1],[220.00,1],
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,1],
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],
-    [329.63,1],[329.63,1],[0,1],
-    [246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,4],
+  let _currentSongIdx = 0;
+  const _SONGS = [
+    { name: 'sandstorm.mid', bpm: 136, notes: [
+      [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,1],
+      [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,3],
+      [329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[0,1],
+      [293.66,1],[293.66,1],[293.66,1],[293.66,1],[0,4],
+      [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,1],
+      [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,3],
+      [329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[329.63,1],[0,1],
+      [293.66,1],[293.66,1],[293.66,1],[293.66,1],[0,4],
+      [293.66,1],[293.66,1],[293.66,1],[0,1],[220.00,1],[220.00,1],
+      [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,1],
+      [246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],
+      [329.63,1],[329.63,1],[0,1],[246.94,1],[246.94,1],[246.94,1],[246.94,1],[0,4],
+    ]},
+    { name: 'smb3_athletic.mid', bpm: 155, notes: [
+      // Main riff - E major, staccato 8th notes
+      [659.25,2],[523.25,2],[659.25,2],[0,2],[587.33,2],[493.88,2],[523.25,2],[0,2],
+      [659.25,2],[523.25,2],[659.25,2],[0,2],[783.99,2],[0,2],[740.00,2],[0,2],
+      [659.25,2],[523.25,2],[659.25,2],[0,2],[587.33,2],[493.88,2],[523.25,2],[0,2],
+      [440.00,2],[493.88,2],[523.25,2],[587.33,2],[659.25,8],[0,4],
+      // Response phrase
+      [523.25,2],[493.88,2],[440.00,2],[493.88,2],[523.25,4],[0,4],
+      [587.33,2],[523.25,2],[493.88,2],[523.25,2],[587.33,4],[0,4],
+      [659.25,2],[740.00,2],[783.99,2],[659.25,2],[587.33,4],[0,4],
+      [523.25,4],[440.00,4],[329.63,8],[0,8],
+    ]},
+    { name: 'tp_hyrule_field.mid', bpm: 108, notes: [
+      // Zelda TP Field Theme - A major, majestic
+      [440.00,4],[493.88,2],[554.37,2],[587.33,2],[659.25,6],[0,4],
+      [739.99,4],[659.25,2],[587.33,2],[554.37,2],[493.88,6],[0,4],
+      [440.00,4],[493.88,2],[554.37,2],[659.25,4],[783.99,4],[0,4],
+      [880.00,8],[739.99,4],[659.25,4],[0,4],
+      [587.33,4],[659.25,2],[587.33,2],[554.37,4],[493.88,4],[0,4],
+      [440.00,4],[493.88,2],[554.37,2],[587.33,4],[493.88,4],[0,4],
+      [440.00,8],[329.63,4],[0,4],[440.00,16],[0,8],
+    ]},
+    { name: 'down_by_river.mid', bpm: 96, notes: [
+      // Neil Young - Down by the River, A mixolydian, laid back
+      [440.00,4],[392.00,2],[440.00,2],[0,2],[440.00,2],[392.00,2],[329.63,2],[0,4],
+      [293.66,4],[329.63,2],[293.66,2],[0,2],[329.63,2],[293.66,2],[220.00,4],[0,4],
+      [440.00,4],[392.00,2],[440.00,2],[0,2],[440.00,2],[392.00,2],[329.63,2],[0,4],
+      [220.00,8],[0,4],[293.66,2],[329.63,2],[0,4],
+      [440.00,4],[0,2],[392.00,2],[440.00,4],[0,2],[392.00,2],[329.63,4],[0,4],
+      [293.66,4],[329.63,4],[440.00,8],[0,8],
+      [440.00,4],[392.00,4],[329.63,4],[293.66,4],[220.00,16],[0,8],
+    ]},
   ];
 
   function _initAc() {
@@ -1340,6 +1362,8 @@
     _scheduleLoop(_ac.currentTime);
     const s = document.getElementById('_midi-status');
     if (s) { s.textContent = '▶ NOW PLAYING'; s.style.color = '#00ff00'; }
+    const n = document.getElementById('_midi-song');
+    if (n) n.textContent = '♫ ' + _SONGS[_currentSongIdx].name + ' ♫';
   }
 
   function _midiStop() {
@@ -1348,6 +1372,15 @@
     if (_mMaster) { _mMaster.gain.linearRampToValueAtTime(0, _ac.currentTime + 0.05); _mMaster = null; }
     const s = document.getElementById('_midi-status');
     if (s) { s.textContent = '⏹ Stopped'; s.style.color = '#888'; }
+  }
+
+  function _midiChangeSong(dir) {
+    const wasPlaying = _mPlaying;
+    _midiStop();
+    _currentSongIdx = (_currentSongIdx + dir + _SONGS.length) % _SONGS.length;
+    const n = document.getElementById('_midi-song');
+    if (n) n.textContent = '♫ ' + _SONGS[_currentSongIdx].name + ' ♫';
+    if (wasPlaying) setTimeout(_midiPlay, 150);
   }
 
   function _clickBlip() {
@@ -1370,9 +1403,11 @@
 
   function _scheduleLoop(startTime) {
     if (!_mPlaying || !_mMaster) return;
+    const song = _SONGS[_currentSongIdx];
+    const s16 = 60 / song.bpm / 4;
     let t = startTime;
-    _SONG.forEach(([freq, dur]) => {
-      const d = dur * _S16;
+    song.notes.forEach(([freq, dur]) => {
+      const d = dur * s16;
       if (freq > 0) {
         [8, -8].forEach(detune => {
           const osc = _ac.createOscillator();
@@ -1901,7 +1936,7 @@
 
     const midi = `<div class="_gutter-hd">🎵 NOW PLAYING 🎵</div>
     <div class="_gutter-midi">
-      <div style="color:#00ff00;font-size:0.55rem;margin-bottom:4px">♫ sandstorm.mid ♫</div>
+      <div id="_midi-song" style="color:#00ff00;font-size:0.55rem;margin-bottom:4px">♫ sandstorm.mid ♫</div>
       <div style="background:#222;height:20px;border:1px inset #444;margin-bottom:4px;display:flex;align-items:flex-end;justify-content:center;gap:1px;padding:2px">
         <div style="width:4px;background:#0f0;animation:_bounce 0.4s ease infinite;height:60%"></div>
         <div style="width:4px;background:#0f0;animation:_bounce 0.6s ease infinite;height:80%"></div>
@@ -1911,8 +1946,10 @@
         <div style="width:4px;background:#0f0;animation:_bounce 0.35s ease infinite;height:90%"></div>
         <div style="width:4px;background:#0f0;animation:_bounce 0.55s ease infinite;height:45%"></div>
       </div>
-      <span id="_midi-play" class="_gutter-midi-btn" onclick="_midiPlay()">⏵ Play</span>
-      <span id="_midi-stop" class="_gutter-midi-btn" onclick="_midiStop()">⏸ Stop</span>
+      <span class="_gutter-midi-btn" onclick="_midiChangeSong(-1)">⏮</span>
+      <span id="_midi-play" class="_gutter-midi-btn" onclick="_midiPlay()">⏵</span>
+      <span id="_midi-stop" class="_gutter-midi-btn" onclick="_midiStop()">⏸</span>
+      <span class="_gutter-midi-btn" onclick="_midiChangeSong(1)">⏭</span>
       <div style="color:#888;font-size:0.48rem;margin-top:4px" id="_midi-status">Click Play to start</div>
     </div>`;
 
